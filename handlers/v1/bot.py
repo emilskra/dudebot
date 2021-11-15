@@ -1,13 +1,13 @@
 from aiogram.types import Message, ContentType
-from typing import Dict
 
 from app import dp, bot
+from schemas.buttons_schema import InterviewButtons
+from services.audio import get_audio
 from utils.bot_api_helper import get_keyboard_buttons, get_inline_buttons, Button
 from services import packs
-from services.interview import Interview, QuestionsEnded
-from services import audio
+from services.interview import Interview, QuestionsEnded, get_interview_service
 
-interviews_storage: Dict[Interview] = {}
+interviews_storage: dict[int, Interview] = {}
 
 
 @dp.message_handler(commands=['start'])
@@ -15,23 +15,23 @@ async def send_welcome(message: Message):
     chat_id = message.chat.id
 
     bot.send_message(chat_id, 'Привет! Я возьму у тебя интервью')
-    pack_message(chat_id)
+    await pack_message(chat_id)
 
 
 @dp.message_handler(content_types=ContentType.TEXT)
-def echo_all(message: Message):
+async def echo_all(message: Message):
     chat_id = message.chat.id
 
-    if message.text == "завершить":
-        finish(chat_id)
-    elif message.text == "заново":
-        pack_message(chat_id)
+    if message.text == InterviewButtons.end:
+        await finish(chat_id)
+    elif message.text == InterviewButtons.repeat:
+        await pack_message(chat_id)
     else:
-        message.reply("не понял")
+        await message.reply("не понял")
 
 
 @dp.callback_query_handler(regexp='packs_[0-9]')
-def pack_choose(call):
+async def pack_choose(call):
     bot.answer_callback_query(
         call.id,
         "отлично, я буду присылать вопрос, а ты мне отвечай голосовым сообщением",
@@ -40,33 +40,33 @@ def pack_choose(call):
     chat_id = call.message.chat.id
     pack_id = int(call.data.replace("packs_", ""))
 
-    interview = Interview(chat_id, pack_id)
+    interview = get_interview_service(chat_id, pack_id)
+    question = interview.get_next_question()
 
     keyboard = get_keyboard_buttons([Button(text="завершить")])
-    bot.send_voice(chat_id, interview.pack.questions[0], reply_markup=keyboard)
-    interviews_storage[chat_id] = interview
+    bot.send_voice(chat_id, question, reply_markup=keyboard)
 
 
 @dp.message_handler(content_types=ContentType.VOICE)
-def handle_voice(message: Message) -> None:
+async def handle_voice(message: Message) -> None:
     chat_id = message.chat.id
     if chat_id not in interviews_storage:
-        pack_message(chat_id)
+        await pack_message(chat_id)
         return
 
     interview = interviews_storage[chat_id]
 
-    interview.save_answer(message.voice.file_id)
+    await interview.save_answer(message.voice.file_id)
     try:
-        next_question = interview.get_next_question(message.voice.file_id)
+        next_question = await interview.get_next_question()
     except QuestionsEnded:
-        finish(chat_id)
+        await finish(chat_id)
         return
 
     bot.send_voice(chat_id, next_question)
 
 
-def pack_message(chat_id: int) -> None:
+async def pack_message(chat_id: int) -> None:
     buttons = [
         Button(text=pack.name, callback_data=f"packs_{pack.id}")
         for i, pack in packs.get_packs()
@@ -76,21 +76,22 @@ def pack_message(chat_id: int) -> None:
     bot.send_message(chat_id, "Выбери пак:", reply_markup=keyboard)
 
 
-def finish(chat_id: int) -> None:
+async def finish(chat_id: int) -> None:
     keyboard = get_keyboard_buttons([Button(text="завершить")])
     bot.send_message(chat_id, "подожди, я соберу в один файл", reply_markup=keyboard)
 
     interview = interviews_storage[chat_id]
     file_ids = interview.get_file_ids()
 
-    finish_file = audio.finish_file(file_ids)
+    audio = get_audio()
+    finish_file = await audio.get_finish_file(file_ids)
 
     if finish_file is None:
-        pack_message(chat_id)
+        await pack_message(chat_id)
         return
 
     bot.send_message(chat_id, "готово, лови", reply_markup=keyboard)
     bot.send_audio(chat_id, finish_file)
 
     # удалим ответы, чтоб не занимать место на сервере
-    audio.clear(file_ids)
+    await audio.clear(file_ids)

@@ -9,13 +9,13 @@ from aiogram.utils.executor import start_webhook
 API_TOKEN = os.getenv("TOKEN")
 
 # webhook settings
-WEBHOOK_HOST = os.getenv("URL")
+WEBHOOK_HOST = os.getenv("WEBHOOK_HOST")
 WEBHOOK_PATH = '/'
 WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
 
 # webserver settings
 WEBAPP_HOST = 'localhost'
-WEBAPP_PORT = os.getenv("PORT")
+WEBAPP_PORT = os.getenv("BOT_PORT")
 
 logging.basicConfig(level=logging.INFO)
 

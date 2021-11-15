@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+
+  bot:
+    container_name: bot
+    build: ./
+    volumes:
+      - ./:/app
+    networks:
+      - bot-network
+
+  postgres:
+    build: ./db
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+    networks:
+      - bot-network
+    restart: on-failure
+
+networks:
+  bot-network:
+    name: bot-network
+    driver: bridge
+
+volumes:
+  postgresdata:
+    name: postgresdata

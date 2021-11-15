@@ -1,6 +1,6 @@
 from typing import List
 
-from models.models import Pack, Question
+from models.questions_models import Pack, Question
 
 
 def get_packs() -> List[Pack]:

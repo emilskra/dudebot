@@ -1,8 +1,11 @@
 from dataclasses import dataclass
 from typing import List
 
-from services.packs import get_pack, get_pack_questions
-from models.models import Question, Pack
+from sqlalchemy.orm import Session
+
+from db.repositories.interview_repo import get_interview_repo, InterviewRepo
+from db.repositories.pack_repo import PackRepo, get_pack_repo
+from models.interview_models import InterviewState
 
 
 class QuestionsEnded(Exception):
@@ -17,43 +20,62 @@ class QuestionAnswer:
 
 class Interview:
 
-    def __init__(self, chat_id: int, pack_id: int):
-        self.chat_id: int = chat_id
-        self.pack: Pack = get_pack(pack_id)
-        self.questions: List[Question] = get_pack_questions(pack_id)
-        self.question_answers: List[QuestionAnswer] = []
+    def __init__(
+            self,
+            chat_id: int,
+            pack_id: int,
+            interview_repo: InterviewRepo,
+            pack_repo: PackRepo,
+    ):
+        self.chat_id = chat_id
+        self.pack_id = pack_id
+        self.interview_repo = interview_repo
+        self.pack_repo = pack_repo
+        self.interview = await self.interview_repo.create(self.pack_id)
 
-    def save_answer(self, answer_file_id: str) -> None:
-        #TODO: Достать id файла вопроса
-        question_answer: QuestionAnswer = QuestionAnswer(question="", answer=answer_file_id)
-        self.question_answers.append(question_answer)
+    async def get_next_question(self) -> str:
+        pack_questions = await self.pack_repo.get_pack_questions(self.pack_id)
+        answers = await self.interview_repo.answers
 
-    def get_next_question(self) -> str:
-        # проверка не закончились ли вопросы
-        if len(self.question_answers) == len(self.questions):
+        if len(pack_questions) == len(answers):
             raise QuestionsEnded
-        else:
-            return self.questions[len(self.question_answers)]
 
-    def get_file_ids(self) -> List[str]:
-        """
-        Собирает интервью с интро и аутро файлом
-        :return: список id файлов
-        """
+        return pack_questions[len(answers)]
+
+    async def save_answer(self, answer_file_id: str) -> None:
+        await self.interview_repo.add_answer(
+            interview_id=self.interview.id,
+            question_file_id='',
+            answer_file_id=answer_file_id
+        )
+
+    async def get_file_ids(self) -> list[str]:
 
         files_ids = []
-
-        intro = self.pack.intro
+        pack = await self.pack_repo.get(self.pack_id)
+        intro = pack.intro
         if intro:
             files_ids.append(intro)
 
-        # последовательно добавим вопрос - ответ
-        for question_answer in self.question_answers:
-            files_ids.append(question_answer.question)
-            files_ids.append(question_answer.answer)
+        answers = await self.interview_repo.answers
+        for question_answer in answers:
+            files_ids.append(question_answer.question_file_id)
+            files_ids.append(question_answer.answer_file_id)
 
-        outro = self.pack.outro
+        outro = pack.outro
         if outro:
             files_ids.append(outro)
 
         return files_ids
+
+
+def get_interview_service(chat_id: int, pack_id: int):
+    interview_repo = get_interview_repo()
+    pack_repo = get_pack_repo()
+
+    return Interview(
+        interview_repo=interview_repo,
+        pack_repo=pack_repo,
+        chat_id=chat_id,
+        pack_id=pack_id,
+    )
