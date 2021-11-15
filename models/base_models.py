@@ -7,7 +7,7 @@ class IDMixin(Base):
     id = Column(Integer, primary_key=True)
 
 
-class ChatIDMixin(Base):
+class UserIDMixin(Base):
     __abstract__ = True
-    chat_id = Column(String, index=True)
+    user_id = Column(String, index=True)
 

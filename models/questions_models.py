@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy import Column, String, Integer, ForeignKey
 from models.base_models import IDMixin
 
 
@@ -10,8 +10,9 @@ class Pack(IDMixin):
     outro = Column(String)
 
 
-class Questions(IDMixin):
+class Question(IDMixin):
     __tablename__ = "questions"
 
     pack = Column(ForeignKey("Pack", ondelete='CASCADE'), nullable=False, index=True)
     file_id = Column(String, nullable=False)
+    order = Column(Integer, nullable=False)

@@ -3,11 +3,10 @@ from aiogram.types import Message, ContentType
 from app import dp, bot
 from schemas.buttons_schema import InterviewButtons
 from services.audio import get_audio
+from services.exceptions import InterviewNotFound
 from utils.bot_api_helper import get_keyboard_buttons, get_inline_buttons, Button
 from services import packs
-from services.interview import Interview, QuestionsEnded, get_interview_service
-
-interviews_storage: dict[int, Interview] = {}
+from services.interview import QuestionsEnded, get_interview_service
 
 
 @dp.message_handler(commands=['start'])
@@ -40,8 +39,10 @@ async def pack_choose(call):
     chat_id = call.message.chat.id
     pack_id = int(call.data.replace("packs_", ""))
 
-    interview = get_interview_service(chat_id, pack_id)
-    question = interview.get_next_question()
+    interview = get_interview_service(chat_id)
+    await interview.start(pack_id)
+
+    question = await interview.get_next_question()
 
     keyboard = get_keyboard_buttons([Button(text="завершить")])
     bot.send_voice(chat_id, question, reply_markup=keyboard)
@@ -50,20 +51,17 @@ async def pack_choose(call):
 @dp.message_handler(content_types=ContentType.VOICE)
 async def handle_voice(message: Message) -> None:
     chat_id = message.chat.id
-    if chat_id not in interviews_storage:
-        await pack_message(chat_id)
-        return
 
-    interview = interviews_storage[chat_id]
-
-    await interview.save_answer(message.voice.file_id)
+    interview = get_interview_service(chat_id)
     try:
+        await interview.save_answer(message.voice.file_id)
         next_question = await interview.get_next_question()
     except QuestionsEnded:
         await finish(chat_id)
-        return
-
-    bot.send_voice(chat_id, next_question)
+    except InterviewNotFound:
+        await finish(chat_id)
+    else:
+        await bot.send_voice(chat_id, next_question)
 
 
 async def pack_message(chat_id: int) -> None:
@@ -77,11 +75,11 @@ async def pack_message(chat_id: int) -> None:
 
 
 async def finish(chat_id: int) -> None:
+    interview = get_interview_service(chat_id)
     keyboard = get_keyboard_buttons([Button(text="завершить")])
     bot.send_message(chat_id, "подожди, я соберу в один файл", reply_markup=keyboard)
 
-    interview = interviews_storage[chat_id]
-    file_ids = interview.get_file_ids()
+    file_ids = await interview.get_file_ids()
 
     audio = get_audio()
     finish_file = await audio.get_finish_file(file_ids)

@@ -1,0 +1,6 @@
+
+class QuestionsEnded(Exception):
+    ...
+
+class InterviewNotFound(Exception):
+    ...

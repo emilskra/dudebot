@@ -1,7 +1,7 @@
 import enum
 
-from sqlalchemy import Enum, Column, String, ForeignKey
-from models.base_models import IDMixin, ChatIDMixin
+from sqlalchemy import Enum, Column, String, Integer, ForeignKey
+from models.base_models import IDMixin, UserIDMixin
 
 
 class InterviewState(str, enum.Enum):
@@ -9,11 +9,12 @@ class InterviewState(str, enum.Enum):
     finish = "finish"
 
 
-class Interview(IDMixin, ChatIDMixin):
+class Interview(IDMixin, UserIDMixin):
     __tablename__ = "interviews"
 
-    pack = Column(ForeignKey("Pack", ondelete='CASCADE'), nullable=False, index=True)
+    pack = Column(ForeignKey("Pack", ondelete='CASCADE'), nullable=False, index=False)
     state = Column(Enum(InterviewState))
+    question = Column(Integer, nullable=True, blank=True)
 
 
 class Answers(IDMixin):
