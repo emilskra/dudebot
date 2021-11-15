@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 
-from aiogram import types
+from aiogram.types import (
+    ReplyKeyboardRemove, ReplyKeyboardMarkup,
+    InlineKeyboardMarkup, InlineKeyboardButton,
+    KeyboardButton,
+)
 from typing import List, Optional
 
 
@@ -10,39 +14,25 @@ class Button:
     callback_data: Optional[str] = None
 
 
-def remove_keyboard():
-    """
-    Удаление клавиатуры
-    @return:
-    """
-    return types.ReplyKeyboardRemove()
+def remove_keyboard() -> ReplyKeyboardRemove:
+    return ReplyKeyboardRemove()
 
 
-def get_keyboard_buttons(buttons: List[Button]) -> types.ReplyKeyboardMarkup:
-    """
-    Формирование кнопок клавиатуры
-    @param buttons: список кнопок
-    @return: Сформированная клавиатура
-    """
-    ReplyKeyboardMarkup = types.ReplyKeyboardMarkup(row_width=1)
+def get_keyboard_buttons(buttons: List[Button]) -> ReplyKeyboardMarkup:
+    reply_keyboard = ReplyKeyboardMarkup(row_width=1)
     for button in buttons:
-        KeyboardButton = types.KeyboardButton(button.text)
-        ReplyKeyboardMarkup.add(KeyboardButton)
+        keyboard_button = KeyboardButton(button.text)
+        reply_keyboard.add(keyboard_button)
 
-    return ReplyKeyboardMarkup
+    return reply_keyboard
 
 
-def get_inline_buttons(buttons: List[Button]) -> types.InlineKeyboardMarkup:
-    """
-    Формирование кнопок сообщения
-    @param buttons: список кнопок
-    @return: Сформированная клавиатура
-    """
-    InlineKeyboardMarkup = types.InlineKeyboardMarkup(row_width=1)
+def get_inline_buttons(buttons: List[Button]) -> InlineKeyboardMarkup:
+    inline_keyboard = InlineKeyboardMarkup(row_width=1)
     for button in buttons:
-        InlineKeyboardButton = types.InlineKeyboardButton(
+        inline_button = InlineKeyboardButton(
             text=button.text,
             callback_data=button.callback_data)
-        InlineKeyboardMarkup.add(InlineKeyboardButton)
+        inline_keyboard.add(inline_button)
 
-    return InlineKeyboardMarkup
+    return inline_keyboard

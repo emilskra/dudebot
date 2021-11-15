@@ -13,7 +13,7 @@ from services.interview import QuestionsEnded, get_interview_service
 async def send_welcome(message: Message):
     chat_id = message.chat.id
 
-    bot.send_message(chat_id, 'Привет! Я возьму у тебя интервью')
+    await bot.send_message(chat_id, 'Привет! Я возьму у тебя интервью')
     await pack_message(chat_id)
 
 
@@ -45,7 +45,7 @@ async def pack_choose(call):
     question = await interview.get_next_question()
 
     keyboard = get_keyboard_buttons([Button(text="завершить")])
-    bot.send_voice(chat_id, question, reply_markup=keyboard)
+    await bot.send_voice(chat_id, question, reply_markup=keyboard)
 
 
 @dp.message_handler(content_types=ContentType.VOICE)
@@ -88,8 +88,7 @@ async def finish(chat_id: int) -> None:
         await pack_message(chat_id)
         return
 
-    bot.send_message(chat_id, "готово, лови", reply_markup=keyboard)
-    bot.send_audio(chat_id, finish_file)
+    await bot.send_message(chat_id, "готово, лови", reply_markup=keyboard)
+    await bot.send_audio(chat_id, finish_file)
 
-    # удалим ответы, чтоб не занимать место на сервере
     await audio.clear(file_ids)
