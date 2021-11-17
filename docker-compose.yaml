@@ -10,12 +10,14 @@ services:
       - bot-network
 
   postgres:
-    build: ./db
+    image: postgres:13.2-alpine
     volumes:
       - postgresdata:/var/lib/postgresql/data
     networks:
       - bot-network
     restart: on-failure
+    env_file:
+      - .env
 
 networks:
   bot-network:
