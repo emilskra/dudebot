@@ -12,14 +12,14 @@ class InterviewState(str, enum.Enum):
 class Interview(IDMixin, UserIDMixin):
     __tablename__ = "interviews"
 
-    pack = Column(ForeignKey("Pack", ondelete='CASCADE'), nullable=False, index=False)
+    pack = Column(ForeignKey("packs.id", ondelete='CASCADE'), nullable=False, index=False)
     state = Column(Enum(InterviewState))
-    question = Column(Integer, nullable=True, blank=True)
+    question = Column(Integer, nullable=True)
 
 
 class Answers(IDMixin):
     __tablename__ = "answers"
 
-    interview = Column(ForeignKey("Interview", ondelete='CASCADE'), nullable=False, index=True)
+    interview = Column(ForeignKey("interviews.id", ondelete='CASCADE'), nullable=False, index=True)
     question_file_id = Column(String, nullable=False)
     answer_file_id = Column(String, nullable=False)

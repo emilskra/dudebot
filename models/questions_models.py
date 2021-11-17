@@ -13,6 +13,6 @@ class Pack(IDMixin):
 class Question(IDMixin):
     __tablename__ = "questions"
 
-    pack = Column(ForeignKey("Pack", ondelete='CASCADE'), nullable=False, index=True)
+    pack = Column(ForeignKey("packs.id", ondelete='CASCADE'), nullable=False, index=True)
     file_id = Column(String, nullable=False)
     order = Column(Integer, nullable=False)
