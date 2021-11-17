@@ -13,8 +13,14 @@ class PackRepo(object):
     async def get(self, pack_id: int) -> Pack:
         pass
 
-    async def get_packs(self):
-        pass
+    async def get_packs(self) -> list[Pack]:
+        packs = await self.db.execute(
+            select(
+                Pack,
+            ),
+        )
+
+        return packs
 
     async def get_pack_questions(self, pack_id: int):
         pass
@@ -32,8 +38,8 @@ class PackRepo(object):
         return question
 
 
-def get_pack_repo():
-    db: Session = get_db()
+async def get_pack_repo():
+    db = get_db()
 
     return PackRepo(
         db=db,
