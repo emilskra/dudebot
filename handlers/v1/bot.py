@@ -1,15 +1,22 @@
 from aiogram.types import Message, ContentType
 
-from app import dp, bot
+from aiogram import Bot
+from aiogram.dispatcher import Dispatcher
+
+from core.config import settings
 from schemas.buttons_schema import InterviewButtons
+from db.repositories.pack_repo import get_pack_repo
+from services.interview import QuestionsEnded, get_interview_service
 from services.audio import get_audio
 from services.exceptions import InterviewNotFound
 from utils.bot_api_helper import get_keyboard_buttons, get_inline_buttons, Button
-from services import packs
-from services.interview import QuestionsEnded, get_interview_service
+
+bot = Bot(token=settings.bot.token)
+
+bot_dp = Dispatcher(bot)
 
 
-@dp.message_handler(commands=['start'])
+@bot_dp.message_handler(commands=['start'])
 async def send_welcome(message: Message):
     chat_id = message.chat.id
 
@@ -17,7 +24,7 @@ async def send_welcome(message: Message):
     await pack_message(chat_id)
 
 
-@dp.message_handler(content_types=ContentType.TEXT)
+@bot_dp.message_handler(content_types=ContentType.TEXT)
 async def echo_all(message: Message):
     chat_id = message.chat.id
 
@@ -29,9 +36,9 @@ async def echo_all(message: Message):
         await message.reply("не понял")
 
 
-@dp.callback_query_handler(regexp='packs_[0-9]')
+@bot_dp.callback_query_handler(regexp='packs_[0-9]')
 async def pack_choose(call):
-    bot.answer_callback_query(
+    await bot.answer_callback_query(
         call.id,
         "отлично, я буду присылать вопрос, а ты мне отвечай голосовым сообщением",
         show_alert=False
@@ -48,7 +55,7 @@ async def pack_choose(call):
     await bot.send_voice(chat_id, question, reply_markup=keyboard)
 
 
-@dp.message_handler(content_types=ContentType.VOICE)
+@bot_dp.message_handler(content_types=ContentType.VOICE)
 async def handle_voice(message: Message) -> None:
     chat_id = message.chat.id
 
@@ -65,24 +72,25 @@ async def handle_voice(message: Message) -> None:
 
 
 async def pack_message(chat_id: int) -> None:
+    pack_repo = await get_pack_repo()
     buttons = [
         Button(text=pack.name, callback_data=f"packs_{pack.id}")
-        for i, pack in packs.get_packs()
+        for i, pack in await pack_repo.get_packs()
     ]
 
     keyboard = get_inline_buttons(buttons)
-    bot.send_message(chat_id, "Выбери пак:", reply_markup=keyboard)
+    await bot.send_message(chat_id, "Выбери пак:", reply_markup=keyboard)
 
 
 async def finish(chat_id: int) -> None:
     interview = get_interview_service(chat_id)
     keyboard = get_keyboard_buttons([Button(text="завершить")])
-    bot.send_message(chat_id, "подожди, я соберу в один файл", reply_markup=keyboard)
+    await bot.send_message(chat_id, "подожди, я соберу в один файл", reply_markup=keyboard)
 
     file_ids = await interview.get_file_ids()
 
-    audio = get_audio()
-    finish_file = await audio.get_finish_file(file_ids)
+    audio = get_audio(bot, file_ids)
+    finish_file = await audio.get_finish_file()
 
     if finish_file is None:
         await pack_message(chat_id)
@@ -91,4 +99,4 @@ async def finish(chat_id: int) -> None:
     await bot.send_message(chat_id, "готово, лови", reply_markup=keyboard)
     await bot.send_audio(chat_id, finish_file)
 
-    await audio.clear(file_ids)
+    await audio.clear()

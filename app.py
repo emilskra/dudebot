@@ -1,36 +1,21 @@
 import logging
-import os
 
-from aiogram import Bot
-from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.dispatcher import Dispatcher
+from aiogram.utils import executor
 from aiogram.utils.executor import start_webhook
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
 
-API_TOKEN = os.getenv("TOKEN")
-
-# webhook settings
-WEBHOOK_HOST = os.getenv("WEBHOOK_HOST")
-WEBHOOK_PATH = '/'
-WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
-
-# webserver settings
-WEBAPP_HOST = 'localhost'
-WEBAPP_PORT = os.getenv("BOT_PORT")
-
-logging.basicConfig(level=logging.INFO)
-
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
-dp.middleware.setup(LoggingMiddleware())
+from core.config import settings
+from handlers.v1.bot import bot_dp
 
 
 async def on_startup(dp: Dispatcher):
-    await bot.set_webhook(WEBHOOK_URL)
-
+    # await bot.set_webhook(settings.bot.webhook_url)
+    ...
 
 async def on_shutdown(dp: Dispatcher):
     logging.warning('Shutting down..')
-    await bot.delete_webhook()
+    # await bot.delete_webhook()
     await dp.storage.close()
     await dp.storage.wait_closed()
 
@@ -38,12 +23,17 @@ async def on_shutdown(dp: Dispatcher):
 
 
 if __name__ == '__main__':
-    start_webhook(
-        dispatcher=dp,
-        webhook_path=WEBHOOK_PATH,
-        on_startup=on_startup,
-        on_shutdown=on_shutdown,
-        skip_updates=True,
-        host=WEBAPP_HOST,
-        port=WEBAPP_PORT,
-    )
+    bot_dp.middleware.setup(LoggingMiddleware())
+
+    if settings.debug:
+        executor.start_polling(bot_dp, skip_updates=True)
+    else:
+        start_webhook(
+            dispatcher=bot_dp,
+            webhook_path=settings.bot.webhook_path,
+            on_startup=on_startup,
+            on_shutdown=on_shutdown,
+            skip_updates=True,
+            host='localhost',
+            port=settings.port,
+        )

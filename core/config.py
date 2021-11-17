@@ -5,7 +5,8 @@ from pydantic import BaseSettings, Field, PostgresDsn, validator
 
 from .logger import LOGGING
 
-logging_config.dictConfig(LOGGING)
+
+# logging_config.dictConfig(LOGGING)
 
 
 class PostgresDsnWithAsync(PostgresDsn):
@@ -16,7 +17,7 @@ class PostgresDsnWithAsync(PostgresDsn):
 class DataBaseSettings(BaseSettings):
     host: str = Field("localhost", env="POSTGRES_HOST")
     port: str = Field('5432', env="POSTGRES_PORT")
-    name: str = Field("bot", env="POSTGRES_DB")
+    name: str = Field("postgres", env="POSTGRES_DB")
     user: str = Field("postgres", env="POSTGRES_USER")
     password: str = Field("password", env="POSTGRES_PASSWORD")
 
@@ -37,11 +38,28 @@ class DataBaseSettings(BaseSettings):
         )
 
 
+class BotSettings(BaseSettings):
+    token: str = Field('', env='TOKEN')
+    webhook_host = Field('localhost', env='WEBHOOK_HOST')
+    webhook_path = Field('/', env='WEBHOOK_PATH')
+
+    webhook_url: Optional[str] = None
+
+    @validator("webhook_url", pre=True, always=False)
+    def set_webhook_url(cls, v: Optional[str], values: Dict[str, Any]) -> str:  # noqa
+        if isinstance(v, str):
+            return v
+
+        return f'{values.get("webhook_host")}/{values.get("webhook_path")}'
+
+
 class ProjectSettings(BaseSettings):
-    project_name: str = "Dude Bot"
-    debug: bool = Field(True, env="BOT_DEBUG")
+    project_name: str = 'Dude Bot'
+    debug: bool = Field(True, env='BOT_DEBUG')
     test: bool = Field(False, env="BOT_TEST")
-    database = DataBaseSettings()
+    port = Field(9000, env='BOT_PORT')
+    database: DataBaseSettings = DataBaseSettings()
+    bot: BotSettings = BotSettings()
 
 
 settings = ProjectSettings()
