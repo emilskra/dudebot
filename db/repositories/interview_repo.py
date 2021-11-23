@@ -1,88 +1,111 @@
-from sqlalchemy import select, update
-from sqlalchemy.orm import Session
+from typing import Union
 
-from db.session import get_db
+from sqlalchemy import select, update
+
+from db.session import async_session
 from models.interview_models import InterviewState, Interview, Answers
-from schemas.interview_schema import InterviewSchema
+from schemas.interview_schema import InterviewSchema, InterviewUpdateSchema
 
 
 class InterviewRepo(object):
 
-    def __init__(self, db: Session):
-        self.db = db
+    async def update_or_create(self, interview: InterviewSchema) -> Interview:
+        async with async_session.begin() as session:
+            interview_db = await session.execute(
+                select(
+                    Interview.id,
+                    Interview.user_id,
+                    Interview.pack,
+                    Interview.question,
+                    Interview.state,
+                ).where(
+                    Interview.user_id == interview.user_id,
+                ),
+            )
+            interview_db = interview_db.first()
+            if interview_db:
+                interview_db = await self.update(interview_db.id, interview)
+            else:
+                interview_db = await self.create(interview)
+
+            return interview_db
 
     async def get(self, interview_id: int) -> Interview:
-        return await self.db.get(Interview, interview_id)
+        async with async_session.begin() as session:
+            return await session.get(Interview, interview_id)
 
-    async def create(self, user_id: int, pack_id: int) -> Interview:
-        interview = Interview(
-            user_id=user_id,
-            pack_id=pack_id,
-            state=InterviewState.started,
-            question=0,
-        )
+    async def create(self, interview: InterviewSchema) -> Interview:
+        async with async_session.begin() as session:
+            interview = Interview(
+                **interview.dict(),
+            )
 
-        await self.db.add(interview)
-        await self.db.flush()
-        return interview
+            session.add(interview)
+            await session.commit()
+            return interview
 
     async def get_user_active_interview(self, user_id: int):
-        interview = await self.db.execute(
-            select(
-                Interview,
-            ).where(
-                Interview.user_id == user_id,
-                Interview.state == InterviewState.started,
+        async with async_session.begin() as session:
+            interview = await session.execute(
+                select(
+                    Interview.id,
+                    Interview.user_id,
+                    Interview.pack,
+                    Interview.question,
+                    Interview.state,
+                ).where(
+                    Interview.user_id == user_id,
+                    Interview.state == InterviewState.started,
+                ),
             )
-        )
 
-        return interview
+            return interview.first()
 
-    async def update(self, interview: Interview, update_data: InterviewSchema):
-        await self.db.execute(
-            update(
-                Interview,
-            ).values(
-                **update_data.dict(),
-            ).where(
-                id == interview
+    async def update(
+            self,
+            interview_id: int,
+            update_data: Union[InterviewSchema, InterviewUpdateSchema]
+    ):
+        async with async_session.begin() as session:
+            await session.execute(
+                update(
+                    Interview,
+                ).values(
+                    **update_data.dict(),
+                ).where(
+                    Interview.id == interview_id,
+                )
             )
-        )
+            await session.commit()
 
-    async def set_state(self, interview_id: int, state: InterviewState):
-        pass
-
-    async def get_answers(self, interview: Interview) -> list[Answers]:
-        answers = await self.db.execute(
-            select(
-                Answers,
-            ).where(
-                Answers.interview == interview,
+    async def get_answers(self, interview_id: int) -> list[Answers]:
+        async with async_session.begin() as session:
+            answers = await session.execute(
+                select(
+                    Answers.question_file_id,
+                    Answers.answer_file_id,
+                ).where(
+                    Answers.interview == interview_id,
+                )
             )
-        )
 
-        return answers
+            return answers.all()
 
     async def add_answer(
             self,
-            interview: Interview,
+            interview_id: int,
             question_file_id: str,
             answer_file_id: str,
     ):
-        answer = Answers(
-            interview=interview,
-            question_file_id=question_file_id,
-            answer_file_id=answer_file_id
-        )
-        await self.db.add(answer)
-        await self.db.flush()
+        async with async_session.begin() as session:
+            answer = Answers(
+                interview=interview_id,
+                question_file_id=question_file_id,
+                answer_file_id=answer_file_id
+            )
+            session.add(answer)
+            return answer
 
-        return answer
 
-
-def get_interview_repo():
-    db: Session = get_db()
-
-    return InterviewRepo(
-        db=db,
-    )
+async def get_interview_repo():
+    return InterviewRepo()

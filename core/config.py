@@ -1,3 +1,4 @@
+import os.path
 from logging import config as logging_config
 from typing import Any, Dict, Optional
 
@@ -54,6 +55,7 @@ class BotSettings(BaseSettings):
 
 
 class ProjectSettings(BaseSettings):
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
     project_name: str = 'Dude Bot'
     debug: bool = Field(True, env='BOT_DEBUG')
     test: bool = Field(False, env="BOT_TEST")

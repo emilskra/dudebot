@@ -1,12 +1,16 @@
 import logging
 
-from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 from aiogram.utils.executor import start_webhook
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram import Bot
+from aiogram.dispatcher import Dispatcher
 
 from core.config import settings
-from handlers.v1.bot import bot_dp
+from handlers.v1.bot import register_bot
+
+bot = Bot(token=settings.bot.token)
+bot_dp = Dispatcher(bot)
 
 
 async def on_startup(dp: Dispatcher):
@@ -24,6 +28,7 @@ async def on_shutdown(dp: Dispatcher):
 
 if __name__ == '__main__':
     bot_dp.middleware.setup(LoggingMiddleware())
+    register_bot(bot_object=bot, dp=bot_dp)
 
     if settings.debug:
         executor.start_polling(bot_dp, skip_updates=True)

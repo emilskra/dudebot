@@ -1,21 +1,24 @@
 import os
 from typing import Optional
-from aiogram import Bot
+
 from pydub import AudioSegment
+from aiogram import Bot
+
+from services.exceptions import AudioFileGenerationError
+from core.config import settings
 
 
 class Audio:
 
-    def __init__(self, bot: Bot, file_ids: list[str]):
-        self.bot = bot
-        self.file_ids = file_ids
+    @staticmethod
+    async def get_finish_file(file_ids: list[str]) -> Optional[str]:
+        bot = Bot(settings.bot.token)
 
-    async def get_finish_file(self) -> Optional[str]:
         if not os.path.exists("finish_files/"):
             os.mkdir("finish_files/")
 
         files = []
-        for file_id in self.file_ids:
+        for file_id in file_ids:
             file_name = f"finish_files/{file_id}.ogg"
 
             if not os.path.exists(file_name):
@@ -23,20 +26,32 @@ class Audio:
 
             files.append(file_name)
 
+        await bot.close()
         if len(files) == 0:
-            return None
+            return
 
         file = AudioSegment.empty()
         for voice in files:
             file += AudioSegment.from_ogg(voice)
 
         file_name = f"finish_files/.ogg"
-        return file.export(file_name, bitrate="192k")
+        exported_file = file.export(file_name, bitrate="192k")
+        if not exported_file:
+            raise AudioFileGenerationError
 
-    async def clear(self) -> None:
-        for file_id in self.file_ids:
-            os.remove(f"finish_files/{file_id}.ogg")
+        return exported_file
+
+    @staticmethod
+    async def clear(file_ids: list[str]) -> None:
+        finish_files_dir = os.path.join(settings.base_dir, 'finish_files')
+        for file_id in file_ids:
+            file_path = os.path.join(finish_files_dir, f'{file_id}.ogg')
+
+            if not os.path.exists(file_path):
+                continue
+
+            os.remove(file_path)
 
 
-def get_audio(bot: Bot, file_ids: list[str]):
-    return Audio(bot, file_ids)
+def get_audio() -> Audio:
+    return Audio()

@@ -1,32 +1,44 @@
-import telebot, os, json
+import asyncio
 
-bot = telebot.TeleBot(os.getenv("TOKEN"), parse_mode=None)
+import aiogram, os, json
 
-MYID = os.getenv("MYID")
-PACK_ID = 1
+bot = aiogram.Bot(os.getenv("TOKEN"))
+admin_id = os.getenv("ADMIN_ID")
+base_dir = os.path.dirname(os.path.abspath(__file__)) + '/voices'
+packs = [
+    "GQ",
+    # "кремниевая долина",
+]
 
-PACK_NAME = "GQ"
-#PACK_NAME = "кремниевая долина"
 
-sent_voices = []
-intro = ""
-outro = ""
+async def upload():
+    sent_voices = []
+    intro = ""
+    outro = ""
 
-for file in os.listdir(PACK_NAME + "/"):
-    question = open(PACK_NAME + "/" + file, mode="rb")
-    file_id = bot.send_voice(MYID, question).voice.file_id
-    if file.find("intro") >= 0:
-        intro = file_id
-    elif file.find("outro") >= 0:
-        outro = file_id
-    else:
-        sent_voices.append(file_id)
+    for pack_name in packs:
+        for file in os.listdir(base_dir + '/' + pack_name + "/"):
+            question = open(base_dir + '/' + pack_name + "/" + file, mode="rb")
+            voice_message = await bot.send_voice(admin_id, question)
+            file_id = voice_message.voice.file_id
+            if file.find("intro") >= 0:
+                intro = file_id
+            elif file.find("outro") >= 0:
+                outro = file_id
+            else:
+                sent_voices.append(file_id)
 
-pack = {
-    "questions": sent_voices,
-    "intro": intro,
-    "outro": outro
-}
+            print(file_id)
 
-print(json.dumps(pack))
+    return sent_voices, intro, outro
 
+
+if __name__ == '__main__':
+    sent_voices, intro, outro = asyncio.run(upload())
+    pack = {
+        "questions": sent_voices,
+        "intro": intro,
+        "outro": outro
+    }
+
+    print(json.dumps(pack))

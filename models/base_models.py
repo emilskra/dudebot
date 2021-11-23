@@ -9,5 +9,5 @@ class IDMixin(Base):
 
 class UserIDMixin(Base):
     __abstract__ = True
-    user_id = Column(String, index=True)
+    user_id = Column(Integer, index=True, nullable=False)
 

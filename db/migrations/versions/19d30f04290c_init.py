@@ -27,7 +27,7 @@ def upgrade():
     )
     op.create_table('interviews',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.String(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('pack', sa.Integer(), nullable=False),
     sa.Column('state', sa.Enum('started', 'finish', name='interviewstate'), nullable=True),
     sa.Column('question', sa.Integer(), nullable=True),
