@@ -36,7 +36,7 @@ async def upload():
 if __name__ == '__main__':
     sent_voices, intro, outro = asyncio.run(upload())
     pack = {
-        "questions": sent_voices,
+        "questions.json": sent_voices,
         "intro": intro,
         "outro": outro
     }

@@ -26,7 +26,6 @@ class Audio:
 
             files.append(file_name)
 
-        await bot.close()
         if len(files) == 0:
             return
 

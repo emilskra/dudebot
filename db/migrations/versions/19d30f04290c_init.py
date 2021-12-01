@@ -39,7 +39,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('pack', sa.Integer(), nullable=False),
     sa.Column('file_id', sa.String(), nullable=False),
-    sa.Column('order', sa.Integer(), nullable=False),
+    sa.Column('sort_order', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['pack'], ['packs.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
