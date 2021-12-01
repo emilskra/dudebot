@@ -1,0 +1,14 @@
+[
+  {
+      "id": 1,
+      "name": "Yura",
+      "intro": "intro_pack_1",
+      "outro": "outro_pack_1"
+  },
+  {
+      "id": 2,
+      "name": "Misc",
+      "intro": "intro_pack_1",
+      "outro": ""
+  }
+]

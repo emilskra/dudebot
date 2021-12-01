@@ -1,5 +1,4 @@
-import os.path
-from logging import config as logging_config
+import os
 from typing import Any, Dict, Optional
 
 from pydantic import BaseSettings, Field, PostgresDsn, validator
@@ -34,21 +33,6 @@ class DataBaseSettings(BaseSettings):
         )
 
 
-class BotSettings(BaseSettings):
-    token: str = Field('', env='TOKEN')
-    webhook_host = Field('localhost', env='WEBHOOK_HOST')
-    webhook_path = Field('/', env='WEBHOOK_PATH')
-
-    webhook_url: Optional[str] = None
-
-    @validator("webhook_url", pre=True, always=False)
-    def set_webhook_url(cls, v: Optional[str], values: Dict[str, Any]) -> str:  # noqa
-        if isinstance(v, str):
-            return v
-
-        return f'{values.get("webhook_host")}/{values.get("webhook_path")}'
-
-
 class ProjectSettings(BaseSettings):
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
     project_name: str = 'Dude Bot'
@@ -56,7 +40,8 @@ class ProjectSettings(BaseSettings):
     test: bool = Field(False, env="BOT_TEST")
     port = Field(9000, env='BOT_PORT')
     database: DataBaseSettings = DataBaseSettings()
-    bot: BotSettings = BotSettings()
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
 
 
 settings = ProjectSettings()
+

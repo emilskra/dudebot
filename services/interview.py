@@ -40,7 +40,7 @@ class InterviewService(object):
 
         update_data = InterviewUpdateSchema(
             state=InterviewState.started,
-            question=question.order
+            question=question.sort_order
         )
         await self.interview_repo.update(interview.id, update_data)
 
@@ -61,9 +61,6 @@ class InterviewService(object):
         return finish_file
 
     async def _get_interview(self) -> Interview:
-        if self.interview:
-            return self.interview
-
         self.interview = await self.interview_repo.get_user_active_interview(self.user_id)
         if not self.interview:
             raise InterviewNotFound
@@ -101,16 +98,16 @@ class InterviewService(object):
             files_ids.append(question_answer.question_file_id)
             files_ids.append(question_answer.answer_file_id)
 
-        outro = pack.intro
+        outro = pack.outro
         if outro:
             files_ids.append(outro)
 
         return files_ids
 
 
-async def get_interview_service(user_id: int) -> InterviewService:
-    interview_repo = await get_interview_repo()
-    pack_repo = await get_pack_repo()
+async def get_interview_service(user_id: int, db) -> InterviewService:
+    interview_repo = await get_interview_repo(db)
+    pack_repo = await get_pack_repo(db)
     audio_service = get_audio()
 
     return InterviewService(

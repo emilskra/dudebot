@@ -17,3 +17,5 @@ yarl==1.6.3
 
 SQLAlchemy==1.4.27
 pydub==0.25.1
+alembic==1.7.5
+pytest==6.2.5

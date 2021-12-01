@@ -15,4 +15,4 @@ class Question(IDMixin):
 
     pack = Column(ForeignKey("packs.id", ondelete='CASCADE'), nullable=False, index=True)
     file_id = Column(String, nullable=False)
-    order = Column(Integer, nullable=False)
+    sort_order = Column(Integer, nullable=False)

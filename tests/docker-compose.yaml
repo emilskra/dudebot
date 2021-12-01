@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+
+  postgres_tests:
+    image: postgres:13.2-alpine
+    volumes:
+      - postgres_tests_data:/var/lib/postgresql/data
+    ports:
+      - "54321:5432"
+    networks:
+      - bot-network
+    restart: on-failure
+    env_file:
+      - test.env
+
+networks:
+  bot-network:
+    name: bot-network
+    driver: bridge
+
+volumes:
+  postgres_tests_data:
+    name: postgres_tests_data
