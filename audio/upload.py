@@ -7,7 +7,6 @@ admin_id = os.getenv("ADMIN_ID")
 base_dir = os.path.dirname(os.path.abspath(__file__)) + '/voices'
 packs = [
     "GQ",
-    # "кремниевая долина",
 ]
 
 
@@ -28,7 +27,7 @@ async def upload():
             else:
                 sent_voices.append(file_id)
 
-            print(file_id)
+            print(file, file_id)
 
     return sent_voices, intro, outro
 
