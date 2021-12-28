@@ -1,0 +1,16 @@
+GET http://localhost:8080/concat
+Content-Type: application/json
+
+{
+  "files": ["AwACAgIAAxkDAAIHwWGZcgS16OrbJRJ-Swtt60VRluvLAAIMFgACJEbISKI0qwOZbMnvIgQ", "AwACAgIAAxkDAAIHwmGZcgTEJtDVIFWNpRh7UfCmBaxGAAINFgACJEbISJ53LllDNJT7IgQ"],
+  "finishFileName": "chat_id.ogg"
+}
+
+###
+GET https://api.telegram.org/file/bot1502829486:AAHr60kaoCuoh5880Y9chqsx4Vr6ZrZWiQs/voice/file_338
+Accept: application/json
+
+###
+GET https://api.telegram.org/bot1502829486:AAHr60kaoCuoh5880Y9chqsx4Vr6ZrZWiQs/getFile?file_id=AwACAgIAAxkDAAIHwWGZcgS16OrbJRJ-Swtt60VRluvLAAIMFgACJEbISKI0qwOZbMnvIgQ
+
+

@@ -1,28 +1,44 @@
 package main
 
 import (
-	"audio_service/api/v1"
-	"github.com/julienschmidt/httprouter"
-	"github.com/kelseyhightower/envconfig"
-	"net/http"
+	apiV1 "audio_service/api/v1"
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"log"
+	"time"
 )
 
-type Config struct {
-	Token string `envconfig:"TOKEN"`
-}
-
 func main() {
+	router := gin.New()
 
-	var cfg Config
-	errConfig := envconfig.Process("", cfg)
-	if errConfig != nil {
-		return
-	}
-	router := httprouter.New()
-	router.GET("/concat", api_v1.Concat)
+	// LoggerWithFormatter middleware will write the logs to gin.DefaultWriter
+	// By default gin.DefaultWriter = os.Stdout
+	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 
-	errServer := http.ListenAndServe(":8080", router)
+		// your custom format
+		return fmt.Sprintf("%s - [%s] \"%s %s %s %d %s \"%s\" %s\"\n",
+			param.ClientIP,
+			param.TimeStamp.Format(time.RFC1123),
+			param.Method,
+			param.Path,
+			param.Request.Proto,
+			param.StatusCode,
+			param.Latency,
+			param.Request.UserAgent(),
+			param.ErrorMessage,
+		)
+	}))
+	router.Use(gin.Recovery())
+
+	router.GET("/concat", apiV1.Concat)
+	router.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+	errServer := router.Run()
 	if errServer != nil {
-		return
+		log.Fatal(errServer)
 	}
+
 }

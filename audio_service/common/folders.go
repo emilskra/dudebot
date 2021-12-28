@@ -1,9 +1,38 @@
 package common
 
+import (
+	"errors"
+	"log"
+	"os"
+	"path"
+)
+
 func DataDirectory() string {
-	return ""
+	dir, _ := os.Getwd()
+
+	dataDir := path.Join(dir, "data")
+
+	_, err := os.Stat(dataDir)
+	if errors.Is(err, os.ErrNotExist) {
+		errDir := os.Mkdir(dataDir, 0750)
+		if errDir != nil {
+			log.Fatal(errDir)
+		}
+	}
+
+	return dataDir
 }
 
 func ExportFilesDirectory() string {
-	return ""
+	dir, _ := os.Getwd()
+	exportDir := path.Join(dir, "export")
+	_, err := os.Stat(exportDir)
+	if errors.Is(err, os.ErrNotExist) {
+		errDir := os.Mkdir(exportDir, 0750)
+		if errDir != nil {
+			log.Fatal(errDir)
+		}
+	}
+
+	return exportDir
 }

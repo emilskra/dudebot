@@ -1,17 +1,36 @@
-package api_v1
+package apiV1
 
 import (
 	"audio_service/audio"
 	"audio_service/storage"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-func Concat(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+type files struct {
+	files          []string
+	finishFileName string
+}
 
-	var files []string
-	var finishFileName string
+func Concat(c *gin.Context) {
 
-	downloadedFiles := storage.DownloadFiles(&files)
-	audio.ConcatFiles(downloadedFiles, finishFileName)
+	var json files
+	if err := c.ShouldBindJSON(&json); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	downloadedFiles, errDownload := storage.DownloadFiles(&json.files)
+	if errDownload != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errDownload.Error()})
+		return
+	}
+
+	exportedFile, errExport := audio.ConcatFiles(downloadedFiles, json.finishFileName)
+	if errExport != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errExport.Error()})
+		return
+	}
+
+	c.File(*exportedFile)
 }
