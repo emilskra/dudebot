@@ -19,10 +19,11 @@ func TestConcatFiles(t *testing.T) {
 
 	exportedFile, err := ConcatFiles(files, "chat_id.ogg")
 
-	_ = os.Remove(*exportedFile)
-	_ = os.Remove(common.ExportFilesDirectory())
+	defer os.Remove(*exportedFile)
+	defer os.Remove(common.ExportFilesDirectory())
 
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
+
 }

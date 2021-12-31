@@ -13,7 +13,9 @@ func TestDownloadFile(t *testing.T) {
 	filename := "seg.ogg"
 	fileId := "AwACAgIAAxkDAAIHwWGZcgS16OrbJRJ-Swtt60VRluvLAAIMFgACJEbISKI0qwOZbMnvIgQ"
 	filepath := path.Join(common.DataDirectory(), filename)
-	err := DownloadFile(filepath, fileId)
+
+	storage := TelegramStorage{}
+	err := storage.DownloadFile(filepath, fileId)
 
 	if err != nil {
 		t.Errorf("Error: %v", err)
@@ -36,7 +38,9 @@ func TestDownloadFiles(t *testing.T) {
 	files := []string{
 		fileId,
 	}
-	downloadedFiles, err := DownloadFiles(&files)
+
+	storage := TelegramStorage{}
+	downloadedFiles, err := storage.DownloadFiles(&files)
 
 	if err != nil {
 		t.Errorf("Error: %v", err)

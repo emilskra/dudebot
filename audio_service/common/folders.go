@@ -16,7 +16,7 @@ func DataDirectory() string {
 	if errors.Is(err, os.ErrNotExist) {
 		errDir := os.Mkdir(dataDir, 0750)
 		if errDir != nil {
-			log.Fatal(errDir)
+			log.Println(errDir)
 		}
 	}
 
@@ -24,13 +24,12 @@ func DataDirectory() string {
 }
 
 func ExportFilesDirectory() string {
-	dir, _ := os.Getwd()
-	exportDir := path.Join(dir, "export")
+	exportDir := path.Join(DataDirectory(), "export")
 	_, err := os.Stat(exportDir)
 	if errors.Is(err, os.ErrNotExist) {
 		errDir := os.Mkdir(exportDir, 0750)
 		if errDir != nil {
-			log.Fatal(errDir)
+			log.Println(errDir)
 		}
 	}
 

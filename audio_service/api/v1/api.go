@@ -3,34 +3,36 @@ package apiV1
 import (
 	"audio_service/audio"
 	"audio_service/storage"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"net/http"
 )
 
-type files struct {
-	files          []string
-	finishFileName string
+type concatFiles struct {
+	Files          []string `json:"files"`
+	FinishFileName string   `json:"finishFileName"`
 }
 
-func Concat(c *gin.Context) {
+func Concat(c *fiber.Ctx) error {
 
-	var json files
-	if err := c.ShouldBindJSON(&json); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	var filesData concatFiles
+	if err := c.BodyParser(&filesData); err != nil {
+		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
 
-	downloadedFiles, errDownload := storage.DownloadFiles(&json.files)
+	// Download files
+	fileStorage := storage.NewStorage()
+	downloadedFiles, errDownload := fileStorage.DownloadFiles(&filesData.Files)
 	if errDownload != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": errDownload.Error()})
-		return
+		return fiber.NewError(http.StatusBadRequest, errDownload.Error())
 	}
 
-	exportedFile, errExport := audio.ConcatFiles(downloadedFiles, json.finishFileName)
+	// Concat downloaded files
+	exportedFile, errExport := audio.ConcatFiles(downloadedFiles, filesData.FinishFileName)
 	if errExport != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": errExport.Error()})
-		return
+		return fiber.NewError(http.StatusBadRequest, errExport.Error())
 	}
 
-	c.File(*exportedFile)
+	downloadedFiles = append(downloadedFiles, *exportedFile)
+	defer storage.ClearFiles(&downloadedFiles)
+	return c.SendFile(*exportedFile)
 }

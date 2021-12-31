@@ -1,4 +1,4 @@
-GET http://localhost:8080/concat
+POST http://localhost:8080/concat
 Content-Type: application/json
 
 {

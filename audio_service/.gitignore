@@ -9,3 +9,6 @@ __pycache__/
 
 # Distribution / packaging
 /.idea
+
+# Project settings
+.env

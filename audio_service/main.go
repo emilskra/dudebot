@@ -2,43 +2,22 @@ package main
 
 import (
 	apiV1 "audio_service/api/v1"
-	"fmt"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"log"
-	"time"
 )
 
 func main() {
-	router := gin.New()
+	app := fiber.New()
 
-	// LoggerWithFormatter middleware will write the logs to gin.DefaultWriter
-	// By default gin.DefaultWriter = os.Stdout
-	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-
-		// your custom format
-		return fmt.Sprintf("%s - [%s] \"%s %s %s %d %s \"%s\" %s\"\n",
-			param.ClientIP,
-			param.TimeStamp.Format(time.RFC1123),
-			param.Method,
-			param.Path,
-			param.Request.Proto,
-			param.StatusCode,
-			param.Latency,
-			param.Request.UserAgent(),
-			param.ErrorMessage,
-		)
-	}))
-	router.Use(gin.Recovery())
-
-	router.GET("/concat", apiV1.Concat)
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
+	app.Get("/ping", func(c *fiber.Ctx) error {
+		return c.SendString("Hello, World 👋!")
 	})
-	errServer := router.Run()
-	if errServer != nil {
-		log.Fatal(errServer)
+
+	app.Post("/concat", apiV1.Concat)
+
+	err := app.Listen(":8080")
+	if err != nil {
+		log.Fatal(err)
 	}
 
 }

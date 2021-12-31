@@ -10,9 +10,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 )
 
-const token string = "1502829486:AAHr60kaoCuoh5880Y9chqsx4Vr6ZrZWiQs"
+var TOKEN = os.Getenv("TOKEN")
+
+type TelegramStorage struct {
+}
 
 type TelegramFile struct {
 	FilePath string `json:"file_path"`
@@ -22,7 +26,7 @@ type TelegramFileInfo struct {
 	Result TelegramFile `json:"result"`
 }
 
-func DownloadFiles(files *[]string) ([]string, error) {
+func (t TelegramStorage) DownloadFiles(files *[]string) ([]string, error) {
 
 	if len(*files) == 0 {
 		return nil, errors.New("files not provided")
@@ -31,10 +35,9 @@ func DownloadFiles(files *[]string) ([]string, error) {
 	var downloadedFiles []string
 
 	for _, file := range *files {
-		filepath := common.DataDirectory() + file + ".ogg"
-		err := DownloadFile(filepath, file)
+		filepath := path.Join(common.DataDirectory(), file+".ogg")
+		err := t.DownloadFile(filepath, file)
 		if err != nil {
-			log.Fatal(err) // TODO: make normal log
 			return nil, err
 		}
 
@@ -44,7 +47,7 @@ func DownloadFiles(files *[]string) ([]string, error) {
 	return downloadedFiles, nil
 }
 
-func DownloadFile(filepath string, file string) error {
+func (t TelegramStorage) DownloadFile(filepath string, file string) error {
 
 	fileTelegram, err := getFileInfo(file)
 	if err != nil {
@@ -73,7 +76,7 @@ func DownloadFile(filepath string, file string) error {
 
 func getFileInfo(file string) (*TelegramFile, error) {
 
-	filePathURL := "https://api.telegram.org/bot" + token + "/getFile?file_id=" + file
+	filePathURL := "https://api.telegram.org/bot" + TOKEN + "/getFile?file_id=" + file
 
 	r, err := http.Get(filePathURL)
 	if err != nil {
@@ -97,7 +100,7 @@ func getFileInfo(file string) (*TelegramFile, error) {
 
 func getFile(fileTelegram *TelegramFile) (*http.Response, error) {
 
-	downLoadURL := "https://api.telegram.org/file/bot" + token + "/" + fileTelegram.FilePath
+	downLoadURL := "https://api.telegram.org/file/bot" + TOKEN + "/" + fileTelegram.FilePath
 
 	// Get the file
 	r, err := http.Get(downLoadURL)
