@@ -9,7 +9,8 @@ from schemas.bot_schema import InterviewButtons, BotTexts
 from db.repositories.pack_repo import get_pack_repo
 from services.interview import get_interview_service
 from services.exceptions import InterviewNotFound, EmptyInterview, AudioFileGenerationError, QuestionNotFound
-from utils.bot_api_helper import get_keyboard_buttons, get_inline_buttons, Button
+from services.storages.telegram_storage import set_bot
+from utils.bot_api_helper import get_keyboard_buttons, get_inline_buttons, remove_keyboard, Button
 
 bot: Optional[Bot] = None
 
@@ -59,7 +60,7 @@ async def handle_voice(message: Message, db: AsyncSession) -> None:
     except QuestionNotFound:
         await finish(chat_id, db)
     except InterviewNotFound:
-        await finish(chat_id, db)
+        await pack_message(chat_id, db)
 
 
 async def pack_message(chat_id: int, db: AsyncSession) -> None:
@@ -75,13 +76,14 @@ async def pack_message(chat_id: int, db: AsyncSession) -> None:
 
 async def finish(chat_id: int, db: AsyncSession) -> None:
     interview = await get_interview_service(chat_id, db)
-    keyboard = get_keyboard_buttons([Button(text=InterviewButtons.END.value)])
+    keyboard = get_keyboard_buttons([Button(text=InterviewButtons.REPEAT.value)])
+    remove = remove_keyboard()
 
-    await bot.send_message(chat_id, BotTexts.WAIT.value, reply_markup=keyboard)
+    await bot.send_message(chat_id, BotTexts.WAIT.value, reply_markup=remove)
     try:
-        finish_file = await interview.finish()
-        await bot.send_message(chat_id, BotTexts.END.value, reply_markup=keyboard)
-        await bot.send_audio(chat_id, finish_file)
+        async with interview.finish() as finish_file:
+            await bot.send_message(chat_id, BotTexts.END.value, reply_markup=keyboard)
+            await bot.send_audio(chat_id, finish_file)
     except (InterviewNotFound, EmptyInterview, AudioFileGenerationError):
         await pack_message(chat_id, db)
 
@@ -89,6 +91,8 @@ async def finish(chat_id: int, db: AsyncSession) -> None:
 def register_bot(bot_object: Bot, dp: Dispatcher):
     global bot
     bot = bot_object
+
+    set_bot(bot_object)
 
     dp.register_message_handler(send_welcome, commands=["start"])
     dp.register_message_handler(text_messages, content_types=ContentType.TEXT)

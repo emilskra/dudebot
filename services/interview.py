@@ -1,3 +1,7 @@
+from contextlib import asynccontextmanager
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from db.repositories.interview_repo import get_interview_repo, InterviewRepo
 from db.repositories.pack_repo import PackRepo, get_pack_repo
 from models.interview_models import InterviewState, Interview
@@ -34,7 +38,10 @@ class InterviewService(object):
         if answer_file_id:
             await self._save_answer(answer_file_id)
 
-        question = await self.pack_repo.get_question(interview.pack, interview.question + 1)
+        question = await self.pack_repo.get_question(
+            pack_id=interview.pack,
+            question_number=interview.question + 1,
+        )
         if not question:
             raise QuestionNotFound
 
@@ -46,19 +53,16 @@ class InterviewService(object):
 
         return question.file_id
 
+    @asynccontextmanager
     async def finish(self) -> str:
-        interview = await self._get_interview()
-
-        file_ids = await self._get_file_ids()
+        await self._get_interview()
+        file_ids: list[str] = await self._get_file_ids()
         finish_file = await self.audio.get_finish_file(file_ids)
-
-        update_data = InterviewUpdateSchema(
-            state=InterviewState.finish,
-            question=0
-        )
-        await self.interview_repo.update(interview.id, update_data)
-        await self.audio.clear(file_ids)
-        return finish_file
+        try:
+            yield finish_file
+        finally:
+            await self._set_finish()
+            await self.audio.clear(file_ids)
 
     async def _get_interview(self) -> Interview:
         self.interview = await self.interview_repo.get_user_active_interview(self.user_id)
@@ -82,15 +86,14 @@ class InterviewService(object):
         )
 
     async def _get_file_ids(self) -> list[str]:
-        interview = await self._get_interview()
         files_ids = []
 
-        pack = await self.pack_repo.get(interview.pack)
+        pack = await self.pack_repo.get(self.interview.pack)
         intro = pack.intro
         if intro:
             files_ids.append(intro)
 
-        answers = await self.interview_repo.get_answers(interview.id)
+        answers = await self.interview_repo.get_answers(self.interview.id)
         if not answers:
             raise EmptyInterview
 
@@ -104,8 +107,15 @@ class InterviewService(object):
 
         return files_ids
 
+    async def _set_finish(self) -> None:
+        update_data = InterviewUpdateSchema(
+            state=InterviewState.finish,
+            question=0
+        )
+        await self.interview_repo.update(self.interview.id, update_data)
 
-async def get_interview_service(user_id: int, db) -> InterviewService:
+
+async def get_interview_service(user_id: int, db: AsyncSession) -> InterviewService:
     interview_repo = await get_interview_repo(db)
     pack_repo = await get_pack_repo(db)
     audio_service = get_audio()
