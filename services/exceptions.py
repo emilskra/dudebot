@@ -14,5 +14,5 @@ class EmptyInterview(Exception):
     ...
 
 
-class AudioFileGenerationError(Exception):
+class AudioJoinError(Exception):
     ...

@@ -13,6 +13,13 @@ services:
     env_file:
       - .env
 
+  audio_service:
+    build: ./audio_service
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+
 networks:
   bot-network:
     name: bot-network

@@ -36,9 +36,9 @@ class InterviewRepo(object):
     async def get(self, interview_id: int) -> Interview:
         return await self.db.get(Interview, interview_id)
 
-    async def create(self, interview: InterviewSchema) -> Interview:
+    async def create(self, interview_data: InterviewSchema) -> Interview:
         interview = Interview(
-            **interview.dict(),
+            **interview_data.dict(),
         )
 
         self.db.add(interview)

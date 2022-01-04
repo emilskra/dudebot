@@ -8,9 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from schemas.bot_schema import InterviewButtons, BotTexts
 from db.repositories.pack_repo import get_pack_repo
 from services.interview import get_interview_service
-from services.exceptions import InterviewNotFound, EmptyInterview, AudioFileGenerationError, QuestionNotFound
-from services.storages.telegram_storage import set_bot
-from utils.bot_api_helper import get_keyboard_buttons, get_inline_buttons, remove_keyboard, Button
+from services.exceptions import InterviewNotFound, EmptyInterview, QuestionNotFound
+from utils.bot_api_helper import (
+    get_keyboard_buttons, get_inline_buttons,
+    remove_keyboard, Button
+)
 
 bot: Optional[Bot] = None
 
@@ -84,15 +86,13 @@ async def finish(chat_id: int, db: AsyncSession) -> None:
         async with interview.finish() as finish_file:
             await bot.send_message(chat_id, BotTexts.END.value, reply_markup=keyboard)
             await bot.send_audio(chat_id, finish_file)
-    except (InterviewNotFound, EmptyInterview, AudioFileGenerationError):
+    except (InterviewNotFound, EmptyInterview):
         await pack_message(chat_id, db)
 
 
 def register_bot(bot_object: Bot, dp: Dispatcher):
     global bot
     bot = bot_object
-
-    set_bot(bot_object)
 
     dp.register_message_handler(send_welcome, commands=["start"])
     dp.register_message_handler(text_messages, content_types=ContentType.TEXT)

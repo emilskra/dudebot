@@ -35,10 +35,9 @@ class DataBaseSettings(BaseSettings):
 
 
 class BotSettings(BaseSettings):
-    token: str = Field('', env='TOKEN')
+    token: str = Field(True, env='TOKEN')
     webhook_host = Field('localhost', env='WEBHOOK_HOST')
     webhook_path = Field('/', env='WEBHOOK_PATH')
-
     webhook_url: Optional[str] = None
 
     @validator("webhook_url", pre=True, always=False)
@@ -57,6 +56,7 @@ class ProjectSettings(BaseSettings):
     port = Field(9000, env='BOT_PORT')
     database: DataBaseSettings = DataBaseSettings()
     bot: BotSettings = BotSettings()
+    lambda_concat_url: str = Field('https://functions.yandexcloud.net/d4e7lv30afsp1onahojv', env='LAMBDA_CONCAT_URL')
 
 
 settings = ProjectSettings()

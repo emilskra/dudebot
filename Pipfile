@@ -7,6 +7,8 @@ name = "pypi"
 pytest-asyncio = "==0.16.0"
 psycopg = "*"
 psycopg2-binary = "*"
+aiogram = "*"
+pydub = "*"
 
 [dev-packages]
 
