@@ -10,6 +10,7 @@ aiogram = "*"
 gunicorn = "*"
 sqlalchemy = "*"
 pydantic = "*"
+asyncpg = "*"
 
 [dev-packages]
 
