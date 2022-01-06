@@ -1,11 +1,10 @@
-import pytest
+import asyncio
 from services.audio import get_audio, BaseAudio
 
 
-@pytest.mark.asyncio
 async def test_join():
     audio: BaseAudio = get_audio()
-    await audio.join_files(
+    file = await audio.join_files(
         [
             "AwACAgIAAxkDAAIIJGGqi2wusiROsxHX4Dihw1STcYWKAALzFAACgHpRSSZWdzGLsZn2IgQ",
             "AwACAgIAAxkDAAIIJmGqi21T_3L65koWRUrsk9K4RLzgAAL1FAACgHpRSa1PlYxVxHXrIgQ",
@@ -18,3 +17,6 @@ async def test_join():
         ],
         "chat_id.ogg"
     )
+
+if __name__ == "__main__":
+    asyncio.run(test_join())

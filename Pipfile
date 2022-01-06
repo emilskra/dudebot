@@ -9,6 +9,7 @@ psycopg = "*"
 psycopg2-binary = "*"
 aiogram = "*"
 pydub = "*"
+gunicorn = "*"
 
 [dev-packages]
 
