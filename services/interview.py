@@ -1,3 +1,4 @@
+import io
 from contextlib import asynccontextmanager
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,20 +7,20 @@ from db.repositories.interview_repo import get_interview_repo, InterviewRepo
 from db.repositories.pack_repo import PackRepo, get_pack_repo
 from models.interview_models import InterviewState, Interview
 from schemas.interview_schema import InterviewSchema, InterviewUpdateSchema
-from services.audio import get_audio, Audio
+from services.audio import get_audio, BaseAudio
 from services.exceptions import InterviewNotFound, EmptyInterview, QuestionNotFound
 
 
 class InterviewService(object):
 
-    interview = None
+    interview: Interview = None
 
     def __init__(
             self,
             user_id: int,
             interview_repo: InterviewRepo,
             pack_repo: PackRepo,
-            audio: Audio,
+            audio: BaseAudio,
     ):
         self.user_id = user_id
         self.interview_repo = interview_repo
@@ -27,11 +28,19 @@ class InterviewService(object):
         self.audio = audio
 
     async def start(self, pack_id: int):
+        # Finish old interview
+        try:
+            self.interview = await self._get_interview()
+            await self._set_finish()
+        except InterviewNotFound:
+            ...
+
+        # Start new
         interview_data = InterviewSchema(
             user_id=self.user_id,
             pack=pack_id,
         )
-        self.interview = await self.interview_repo.update_or_create(interview_data)
+        self.interview = await self.interview_repo.create(interview_data)
 
     async def get_next_question(self, answer_file_id: str = None) -> str:
         interview = await self._get_interview()
@@ -54,15 +63,15 @@ class InterviewService(object):
         return question.file_id
 
     @asynccontextmanager
-    async def finish(self) -> str:
+    async def finish(self) -> io.BytesIO:
         await self._get_interview()
         file_ids: list[str] = await self._get_file_ids()
-        finish_file = await self.audio.get_finish_file(file_ids)
+        finish_file_name = f"{self.user_id}.ogg"
+        finish_file = await self.audio.join_files(file_ids, finish_file_name)
         try:
             yield finish_file
         finally:
             await self._set_finish()
-            await self.audio.clear(file_ids)
 
     async def _get_interview(self) -> Interview:
         self.interview = await self.interview_repo.get_user_active_interview(self.user_id)

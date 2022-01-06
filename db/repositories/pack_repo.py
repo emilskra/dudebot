@@ -14,7 +14,8 @@ class PackRepo(object):
         pack = await self.db.get(Pack, pack_id)
         return pack
 
-    async def get_packs(self) -> list[Pack]:
+    @staticmethod
+    async def get_packs() -> list[Pack]:
         async with async_session.begin() as session:
             packs = await session.execute(
                 select(

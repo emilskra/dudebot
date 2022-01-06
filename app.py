@@ -15,12 +15,12 @@ bot_dp = Dispatcher(bot)
 
 
 async def on_startup(dp: Dispatcher):
-    # await bot.set_webhook(settings.bot.webhook_url)
-    ...
+    await bot.set_webhook(settings.bot.webhook_url)
+
 
 async def on_shutdown(dp: Dispatcher):
     logging.warning('Shutting down..')
-    # await bot.delete_webhook()
+    await bot.delete_webhook()
     await dp.storage.close()
     await dp.storage.wait_closed()
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     else:
         start_webhook(
             dispatcher=bot_dp,
-            webhook_path=settings.bot.webhook_path,
+            webhook_path=settings.bot.webhook_url,
             on_startup=on_startup,
             on_shutdown=on_shutdown,
             skip_updates=True,
