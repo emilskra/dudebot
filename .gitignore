@@ -16,3 +16,4 @@ __pycache__/
 /finish_files
 /.idea
 /sert/
+.env

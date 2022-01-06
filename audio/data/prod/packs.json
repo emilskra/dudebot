@@ -1,0 +1,20 @@
+[
+  {
+      "id": 1,
+      "name": "Кремниевая долина",
+      "intro": "AwACAgIAAxkDAAICX2HXOkQ03dcGqDIOsFeG2FRc7P0aAALmGQACa724Sr5_RiuvSYk5IwQ",
+      "outro": "AwACAgIAAxkDAAICYGHXOkVoYizwPBciqaMxK8kSUDFbAALnGQACa724St3EH2aNuAiDIwQ"
+  },
+  {
+      "id": 2,
+      "name": "GQ",
+      "intro": "AwACAgIAAxkDAAICWWHXOkP7wbXZHDTQamPIQFceQSQwAALgGQACa724SoHmkyeH70PXIwQ",
+      "outro": ""
+  },
+  {
+      "id": 3,
+      "name": "странные вопросы",
+      "intro": "AwACAgIAAxkDAAICZmHXOkZZwTBnIpgh_46WXbKQiuYaAALtGQACa724Sj_H5zibJFWyIwQ",
+      "outro": ""
+  }
+]
