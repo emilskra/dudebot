@@ -27,7 +27,7 @@ async def on_shutdown(dp: Dispatcher):
     logging.warning('Bot stopped!')
 
 
-if __name__ == '__main__':
+def start():
     bot_dp.middleware.setup(LoggingMiddleware())
     bot_dp.middleware.setup(DbMiddleware())
     register_bot(bot_object=bot, dp=bot_dp)
@@ -44,3 +44,7 @@ if __name__ == '__main__':
             host='0.0.0.0',
             port=settings.port,
         )
+
+
+if __name__ == '__main__':
+    start()
