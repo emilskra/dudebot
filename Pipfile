@@ -4,9 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pytest-asyncio = "==0.16.0"
 psycopg = "*"
 psycopg2-binary = "*"
+aiogram = "*"
+gunicorn = "*"
+sqlalchemy = "*"
 
 [dev-packages]
 
