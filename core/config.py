@@ -6,12 +6,17 @@ from pydantic import BaseSettings, Field, validator
 
 class BotSettings(BaseSettings):
     token: str = Field(True, env='TOKEN')
-    url = Field('localhost', env='URL')
+    webhook_host: str = Field('localhost', env='URL')
+    webhook_path: Optional[str] = None
     webhook_url: Optional[str] = None
 
-    @validator("webhook_url", pre=True, always=False)
+    @validator("webhook_path", pre=True, always=True)
+    def set_webhook_path(cls, v: Optional[str], values) -> str:  # noqa
+        return f'/webhook/{values.get("token")}'
+
+    @validator("webhook_url", pre=True, always=True)
     def set_webhook_url(cls, v: Optional[str], values) -> str:  # noqa
-        return f'/{values.get("url")}/{values.get("token")}'
+        return f'{values.get("webhook_host")}{values.get("webhook_path")}'
 
 
 class ProjectSettings(BaseSettings):

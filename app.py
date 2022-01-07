@@ -37,10 +37,14 @@ def start():
     else:
         start_webhook(
             dispatcher=bot_dp,
-            webhook_path=settings.bot.webhook_url,
+            webhook_path=settings.bot.webhook_path,
             on_startup=on_startup,
             on_shutdown=on_shutdown,
             skip_updates=True,
             host='0.0.0.0',
             port=settings.port,
         )
+
+
+if __name__ == '__main__':
+    start()
