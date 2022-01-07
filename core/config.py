@@ -24,7 +24,7 @@ class ProjectSettings(BaseSettings):
     project_name: str = 'Dude Bot'
     debug: bool = Field(False, env='BOT_DEBUG')
     test: bool = Field(False, env="BOT_TEST")
-    port = Field(9000, env='PORT')
+    port: int = Field(9000, env='PORT')
     bot: BotSettings = BotSettings()
     lambda_concat_url: str = Field('https://functions.yandexcloud.net/d4e7lv30afsp1onahojv', env='LAMBDA_CONCAT_URL')
     database_url: str = Field('', env='BOT_DATABASE_URL')
