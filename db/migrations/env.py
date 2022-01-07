@@ -23,7 +23,7 @@ fileConfig(config.config_file_name)
 
 config.set_main_option(
     'sqlalchemy.url',
-    settings.database.sqlalchemy_uri
+    settings.database_url
 )
 
 # add your model's MetaData object here
