@@ -44,7 +44,3 @@ def start():
             host='0.0.0.0',
             port=settings.port,
         )
-
-
-if __name__ == '__main__':
-    start()
