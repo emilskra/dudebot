@@ -1,9 +1,13 @@
 build:
 	docker compose up --build -d
 
-init_db:
+migrate:
 	cd db/
 	alembic upgrade head
+
+init_db:
+	cd audio/
+	python fill_data.py
 
 stop:
 	docker compose stop

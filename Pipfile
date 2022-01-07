@@ -11,6 +11,7 @@ gunicorn = "*"
 sqlalchemy = "*"
 pydantic = "*"
 asyncpg = "*"
+alembic = "*"
 
 [dev-packages]
 
