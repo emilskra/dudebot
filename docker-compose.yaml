@@ -1,17 +1,19 @@
 version: '3.8'
 services:
 
-  postgres:
-    image: postgres:13.2-alpine
-    volumes:
-      - postgresdata:/var/lib/postgresql/data
+  mongo:
+    image: mongo
     ports:
-      - "5432:5432"
+      - "27017:27017"
+    restart: always
+    volumes:
+      - mongodbdata:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: $MONGO_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD: $MONGO_PASSWORD
     networks:
       - bot-network
-    restart: on-failure
-    env_file:
-      - .env
+
 
   bot:
     build: .
@@ -27,4 +29,4 @@ networks:
 
 volumes:
   postgresdata:
-    name: postgresdata
+    name: mongodbdata

@@ -5,11 +5,11 @@ from aiogram.types import Message, ContentType
 from aiogram import Bot
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from schemas.bot_schema import InterviewButtons, BotTexts
-from db.repositories.pack_repo import get_pack_repo
-from services.interview import get_interview_service
-from services.exceptions import InterviewNotFound, EmptyInterview, QuestionNotFound
-from utils.bot_api_helper import (
+from src.schemas.bot_schema import InterviewButtons, BotTexts
+from src.repositories.pack_repo import get_pack_repo
+from src.services.interview import get_interview_service
+from src.services.exceptions import InterviewNotFound, EmptyInterview, QuestionNotFound
+from src.utils.bot_api_helper import (
     get_keyboard_buttons, get_inline_buttons,
     remove_keyboard, Button
 )

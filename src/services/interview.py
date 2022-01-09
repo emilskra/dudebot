@@ -1,14 +1,14 @@
 import io
 from contextlib import asynccontextmanager
 
-from sqlalchemy.ext.asyncio import AsyncSession
+import motor.motor_asyncio as motor_async
 
-from db.repositories.interview_repo import get_interview_repo, InterviewRepo
-from db.repositories.pack_repo import PackRepo, get_pack_repo
-from models.interview_models import InterviewState, Interview
-from schemas.interview_schema import InterviewSchema, InterviewUpdateSchema
-from services.audio import get_audio, BaseAudio
-from services.exceptions import InterviewNotFound, EmptyInterview, QuestionNotFound
+from src.repositories.interview_repo import get_interview_repo, InterviewRepo
+from src.repositories.pack_repo import PackRepo, get_pack_repo
+from src.schemas.base import PyObjectId
+from src.schemas.interview_schema import Interview, InterviewUpdate, InterviewState
+from src.services.audio import get_audio, BaseAudio
+from src.services.exceptions import InterviewNotFound, EmptyInterview, QuestionNotFound
 
 
 class InterviewService(object):
@@ -27,7 +27,7 @@ class InterviewService(object):
         self.pack_repo = pack_repo
         self.audio = audio
 
-    async def start(self, pack_id: int):
+    async def start(self, pack_id: PyObjectId):
         # Finish old interview
         try:
             self.interview = await self._get_interview()
@@ -36,7 +36,7 @@ class InterviewService(object):
             ...
 
         # Start new
-        interview_data = InterviewSchema(
+        interview_data = Interview(
             user_id=self.user_id,
             pack=pack_id,
         )
@@ -54,7 +54,7 @@ class InterviewService(object):
         if not question:
             raise QuestionNotFound
 
-        update_data = InterviewUpdateSchema(
+        update_data = InterviewUpdate(
             state=InterviewState.started,
             question=question.sort_order
         )
@@ -102,7 +102,7 @@ class InterviewService(object):
         if intro:
             files_ids.append(intro)
 
-        answers = await self.interview_repo.get_answers(self.interview.id)
+        answers = self.interview.answers
         if not answers:
             raise EmptyInterview
 
@@ -117,14 +117,14 @@ class InterviewService(object):
         return files_ids
 
     async def _set_finish(self) -> None:
-        update_data = InterviewUpdateSchema(
+        update_data = InterviewUpdate(
             state=InterviewState.finish,
             question=0
         )
         await self.interview_repo.update(self.interview.id, update_data)
 
 
-async def get_interview_service(user_id: int, db: AsyncSession) -> InterviewService:
+async def get_interview_service(user_id: int, db: motor_async.AsyncIOMotorClient) -> InterviewService:
     interview_repo = await get_interview_repo(db)
     pack_repo = await get_pack_repo(db)
     audio_service = get_audio()

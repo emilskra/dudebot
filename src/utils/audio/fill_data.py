@@ -7,7 +7,7 @@ import os
 from sqlalchemy import delete
 
 from db.session import async_session
-from models.questions_models import Question, Pack
+from src.models.questions_models import Question, Pack
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

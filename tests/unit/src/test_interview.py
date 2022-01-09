@@ -1,11 +1,12 @@
 import pytest
 
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.exceptions import QuestionNotFound
-from services.interview import InterviewService, get_interview_service
-from models.interview_models import Interview, InterviewState
+from src.services.exceptions import QuestionNotFound
+from src.services.interview import InterviewService, get_interview_service
+from models.interview_models import Interview
+from src.schemas.interview_schema import InterviewState
 
 
 @pytest.mark.asyncio

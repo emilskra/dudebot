@@ -1,5 +1,5 @@
 import asyncio
-from services.audio import get_audio, BaseAudio
+from src.services.audio import get_audio, BaseAudio
 
 
 async def test_join():

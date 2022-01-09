@@ -4,14 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-psycopg = "*"
-psycopg2-binary = "*"
 aiogram = "*"
-gunicorn = "*"
-sqlalchemy = "*"
 pydantic = "*"
-asyncpg = "*"
-alembic = "*"
+motor = "*"
 
 [dev-packages]
 

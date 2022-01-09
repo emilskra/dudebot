@@ -6,9 +6,9 @@ from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram import Bot
 from aiogram.dispatcher import Dispatcher
 
-from core.config import settings
-from handlers.v1.bot import register_bot
-from middlewares.db_middleware import DbMiddleware
+from src.core.config import settings
+from src.handlers.v1.bot import register_bot
+from src.db.db_middleware import DbMiddleware
 
 bot = Bot(token=settings.bot.token)
 bot_dp = Dispatcher(bot)
@@ -27,7 +27,7 @@ async def on_shutdown(dp: Dispatcher):
     logging.warning('Bot stopped!')
 
 
-def start():
+def main():
     bot_dp.middleware.setup(LoggingMiddleware())
     bot_dp.middleware.setup(DbMiddleware())
     register_bot(bot_object=bot, dp=bot_dp)
@@ -35,7 +35,7 @@ def start():
     if settings.debug:
         executor.start_polling(bot_dp, skip_updates=True)
     else:
-        logging.warning(settings)
+        logging.warning("Webhook")
         start_webhook(
             dispatcher=bot_dp,
             webhook_path=settings.bot.webhook_path,
