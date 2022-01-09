@@ -15,8 +15,7 @@ bot_dp = Dispatcher(bot)
 
 
 async def on_startup(dp: Dispatcher):
-    logging.warning('Setting webhook!')
-    await bot.set_webhook(settings.bot.webhook_url)
+    ...
 
 
 async def on_shutdown(dp: Dispatcher):
@@ -32,11 +31,11 @@ def start():
     bot_dp.middleware.setup(LoggingMiddleware())
     bot_dp.middleware.setup(DbMiddleware())
     register_bot(bot_object=bot, dp=bot_dp)
-
+    logging.error(settings)
     if settings.debug:
         executor.start_polling(bot_dp, skip_updates=True)
     else:
-        logging.debug(settings.port)
+        logging.warning(settings)
         start_webhook(
             dispatcher=bot_dp,
             webhook_path=settings.bot.webhook_path,
