@@ -5,8 +5,8 @@ from http import HTTPStatus
 import aiohttp
 from pydantic import BaseModel
 
-from src.core.config import settings
-from src.services.exceptions import AudioJoinError
+from core.config import settings
+from services.exceptions import AudioJoinError
 
 
 class ConcatFiles(BaseModel):

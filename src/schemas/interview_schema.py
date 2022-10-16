@@ -1,10 +1,6 @@
 import enum
 
-from bson import ObjectId
-from pydantic import BaseModel, Field
-
-from src.schemas.answer_schema import Answer
-from src.schemas.base import PyObjectId
+from schemas.base import BaseSchema
 
 
 class InterviewState(str, enum.Enum):
@@ -12,28 +8,27 @@ class InterviewState(str, enum.Enum):
     finish = "finish"
 
 
-class Interview(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+class Interview(BaseSchema):
+    id: str
+    status: InterviewState
     user_id: int
-    pack: PyObjectId
-    state: InterviewState = InterviewState.started
-    question: int = 0
-    answers: list[Answer] = []
-
-    class Config:  # noqa: WPS431
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
-        use_enum_values = True
+    pack_id: int
 
 
-class InterviewUpdate(BaseModel):
-    state: InterviewState
+class InterviewCreate(BaseSchema):
+    status: InterviewState
+    user_id: int
+    pack_id: int
+
+
+class InterviewUpdate(BaseSchema):
+    status: InterviewState
+
+
+class InterviewAnswer(BaseSchema):
+    id: str
+    answer: str
+    interview_id: int
     question: int
-    answers: list[Answer] = []
-
-    class Config:  # noqa: WPS431
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
-        use_enum_values = True
+    question_order: int
+    user_id: int

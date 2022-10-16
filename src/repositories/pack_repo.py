@@ -1,27 +1,51 @@
-import motor.motor_asyncio as motor_async
+import ydb
 
-from src.schemas.pack_schema import Pack, Question
-from src.schemas.base import PyObjectId
-
-
-class PackRepo(object):
-
-    def __init__(self, db: motor_async.AsyncIOMotorClient):
-        self.db = db
-        self.document = db["packs"]
-
-    async def get(self, pack_id: PyObjectId) -> Pack:
-        pack = await self.document.find_one({"_id": pack_id})
-        return pack
-
-    async def get_packs(self) -> list[Pack]:
-        packs = await self.document.find()
-        return packs
-
-    async def get_question(self, pack_id: PyObjectId, question_number: int) -> Question:
-        pack = await self.get(pack_id)
-        return pack.questions[question_number]
+from schemas.pack_schema import Pack
 
 
-async def get_pack_repo(db: motor_async.AsyncIOMotorClient):
-    return PackRepo(db)
+class PackRepo:
+    def __init__(self, session_pool: ydb.aio.SessionPool):
+        self.session_pool = session_pool
+
+    async def add_packs(self, packs: list[Pack]):
+        async def execute(session):
+            query = """
+            DECLARE $packsData AS List<Struct<
+                id: String,
+                name: String,
+                intro_file: String,
+                outro_file: String>>;
+            INSERT INTO packs
+            SELECT
+                id,
+                name,
+                intro_file,
+                outro_file
+            FROM AS_TABLE($packsData);
+            """
+            prepared_query = await session.prepare(query)
+            await session.transaction().execute(
+                prepared_query,
+                parameters={
+                    "$packsData": packs,
+                },
+                commit_tx=True,
+            )
+
+        await self.session_pool.retry_operation(execute)
+
+    async def get_pack(self, pack_id: int) -> Pack:
+        ...
+
+    async def get_all_packs(self) -> list[dict]:
+        async def execute(session):
+            query = """
+                SELECT name FROM packs;
+            """
+            prepared_query = await session.prepare(query)
+            return await session.execute(prepared_query)
+
+        return await self.session_pool.retry_operation(execute)
+
+    async def get_user_pack(self, user_id: int):
+        ...

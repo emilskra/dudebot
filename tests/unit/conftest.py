@@ -1,13 +1,10 @@
-import asyncio
-import json
-import os
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+import asyncio
+import ydb
 
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import text
-
-from .settings import settings
+from repositories.pack_repo import PackRepo
+from services.pack import PackService
+from core.config import settings
 
 
 @pytest.fixture(scope="session")
@@ -17,59 +14,45 @@ def event_loop(request):
     loop.close()
 
 
-@pytest.fixture(autouse=True)
-async def init_test_data(db: AsyncSession):
-
-    statement = text(
-        """
-        TRUNCATE TABLE packs CASCADE;
-    """)
-    await db.execute(statement)
-
-    statement = text(
-        """
-        TRUNCATE TABLE questions CASCADE;
-    """)
-    await db.execute(statement)
-    await db.commit()
-
-    packs_file = os.path.join(settings.data_dir, "packs.json")
-    questions_file = os.path.join(settings.data_dir, "questions.json")
-    with open(packs_file, 'r') as f:
-        data = json.load(f)
-
-        statement = text("""
-            INSERT INTO packs(id, name, intro, outro) 
-            VALUES(:id, :name, :intro, :outro)
-        """)
-        for pack in data:
-            await db.execute(statement, pack)
-
-    with open(questions_file, 'r') as f:
-        data = json.load(f)
-
-        statement = text("""
-            INSERT INTO questions(id, pack, file_id, sort_order) 
-            VALUES(:id, :pack, :file_id, :sort_order)
-        """)
-        for question in data:
-            await db.execute(statement, question)
-
-    await db.commit()
-
-
-@pytest.fixture
-async def db():
-    engine = create_async_engine(settings.database.sqlalchemy_uri)
-    async_session = sessionmaker(
-        engine,
-        expire_on_commit=False,
-        class_=AsyncSession,
+@pytest.fixture(scope='session')
+async def db_session():
+    driver = ydb.aio.Driver(
+        endpoint=settings.database.database_host,
+        database=settings.database.database_name,
+        credentials=ydb.AnonymousCredentials(),
     )
+    await driver.wait(fail_fast=True)
 
-    session = async_session()
-    await session.begin()
-    yield session
-    await session.rollback()
-    await session.close()
+    session_pool = ydb.aio.SessionPool(driver, size=10)
+    yield session_pool
+    await session_pool.stop()
 
+
+@pytest.fixture(scope='function')
+async def clean_db(db_session):
+    yield
+
+    tables = ['interview_answers', 'interviews', 'pack_questions', 'packs', 'users']
+
+    async def execute(session):
+        for table in tables:
+            query = f"""
+            DELETE FROM {table};
+            """
+            prepared_query = await session.prepare(query)
+            await session.transaction().execute(
+                prepared_query,
+                commit_tx=True,
+            )
+
+    await db_session.session_pool.retry_operation(execute)
+
+
+@pytest.fixture(scope='session')
+async def pack_repo(db_session) -> PackRepo:
+    return PackRepo(db_session)
+
+
+@pytest.fixture(scope='session')
+async def pack_service(db_session, pack_repo: PackRepo):
+    return PackService(pack_repo)

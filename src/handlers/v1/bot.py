@@ -1,100 +1,95 @@
-from typing import Optional
-
-from aiogram import Dispatcher
-from aiogram.types import Message, ContentType
+from aiogram.types import Message, CallbackQuery
 from aiogram import Bot
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.schemas.bot_schema import InterviewButtons, BotTexts
-from src.repositories.pack_repo import get_pack_repo
-from src.services.interview import get_interview_service
-from src.services.exceptions import InterviewNotFound, EmptyInterview, QuestionNotFound
-from src.utils.bot_api_helper import (
+from core import texts
+from services.pack import PackService
+from services.question import QuestionService
+from services.base import get_service
+from services.interview import InterviewService, InterviewFinishService
+from services.exceptions import InterviewNotFound, EmptyInterview, QuestionNotFound
+from utils.bot_api_helper import (
     get_keyboard_buttons, get_inline_buttons,
     remove_keyboard, Button
 )
 
-bot: Optional[Bot] = None
 
-
-async def send_welcome(message: Message, db: AsyncSession):
+async def send_welcome(message: Message, bot: Bot):
     chat_id = message.chat.id
 
-    await bot.send_message(chat_id, BotTexts.WELCOME.value)
-    await pack_message(chat_id, db)
+    await bot.send_message(chat_id, texts.WELCOME)
+    await pack_message(bot=bot, chat_id=chat_id)
 
 
-async def text_messages(message: Message, db: AsyncSession):
+async def text_messages(message: Message, bot: Bot):
     chat_id = message.chat.id
-
-    if message.text == InterviewButtons.END:
-        await finish(chat_id, db)
-    elif message.text == InterviewButtons.REPEAT:
-        await pack_message(chat_id, db)
+    if message.text == texts.END:
+        await finish(bot=bot, chat_id=chat_id)
+    elif message.text == texts.REPEAT:
+        await pack_message(bot=bot, chat_id=chat_id)
     else:
-        await message.reply(BotTexts.ERROR.value)
+        await message.reply(texts.ERROR)
 
 
-async def pack_choose(call, db: AsyncSession):
+async def pack_choose(call: CallbackQuery, bot: Bot):
+    interview_service = get_service(InterviewService)
+
     chat_id = call.message.chat.id
     pack_id = int(call.data.replace("packs_", ""))
-    keyboard = get_keyboard_buttons([Button(text=InterviewButtons.END.value)])
+    keyboard = get_keyboard_buttons([Button(text=texts.END)])
 
     await bot.answer_callback_query(call.id)
-    await bot.send_message(chat_id, BotTexts.START.value, reply_markup=keyboard)
+    await bot.send_message(chat_id, texts.START, reply_markup=keyboard)
 
-    interview = await get_interview_service(chat_id, db)
-    await interview.start(pack_id)
+    await interview_service.start_interview(pack_id, chat_id)
     try:
-        question = await interview.get_next_question()
+        question = await interview_service.get_next_question(chat_id)
         await bot.send_voice(chat_id, question, reply_markup=keyboard)
     except QuestionNotFound:
-        await finish(chat_id, db)
+        await finish(bot=bot, chat_id=chat_id)
 
 
-async def handle_voice(message: Message, db: AsyncSession) -> None:
+async def handle_voice(message: Message, bot: Bot) -> None:
+    interview_service = get_service(InterviewService)
+    question_service = get_service(QuestionService)
+
     chat_id = message.chat.id
 
-    interview = await get_interview_service(chat_id, db)
     try:
-        question = await interview.get_next_question(message.voice.file_id)
+        await interview_service.save_answer(chat_id, message.voice.file_id)
+        question = await question_service.get_next_question(chat_id)
         await bot.send_voice(chat_id, question)
     except QuestionNotFound:
-        await finish(chat_id, db)
+        await finish(bot=bot, chat_id=chat_id)
     except InterviewNotFound:
-        await pack_message(chat_id, db)
+        await pack_message(bot=bot, chat_id=chat_id)
 
 
-async def pack_message(chat_id: int, db: AsyncSession) -> None:
-    pack_repo = await get_pack_repo(db)
+async def pack_message(chat_id: int, bot: Bot) -> None:
+    pack_service = get_service(PackService)
+
     buttons = [
         Button(text=pack.name, callback_data=f"packs_{pack.id}")
-        for pack in await pack_repo.get_packs()
+        for pack in await pack_service.get_all()
     ]
 
     keyboard = get_inline_buttons(buttons)
-    await bot.send_message(chat_id, BotTexts.CHOOSE_PACK.value, reply_markup=keyboard)
+    await bot.send_message(chat_id, texts.CHOOSE_PACK, reply_markup=keyboard)
 
 
-async def finish(chat_id: int, db: AsyncSession) -> None:
-    interview = await get_interview_service(chat_id, db)
-    keyboard = get_keyboard_buttons([Button(text=InterviewButtons.REPEAT.value)])
+async def finish(chat_id: int, bot: Bot) -> None:
+    interview_service = get_service(InterviewService)
+    interview_finish_service = get_service(InterviewFinishService)
+
+    keyboard = get_keyboard_buttons([Button(text=texts.REPEAT)])
     remove = remove_keyboard()
 
-    await bot.send_message(chat_id, BotTexts.WAIT.value, reply_markup=remove)
+    await bot.send_message(chat_id, texts.WAIT, reply_markup=remove)
     try:
-        async with interview.finish() as finish_file:
-            await bot.send_message(chat_id, BotTexts.END.value, reply_markup=keyboard)
-            await bot.send_audio(chat_id, finish_file)
+        finish_file = await interview_finish_service.get_interview_finish_file(chat_id)
+
+        await bot.send_message(chat_id, texts.INTERVIEW_END, reply_markup=keyboard)
+        await bot.send_audio(chat_id, finish_file)
+
+        await interview_service.set_interview_finish(chat_id)
     except (InterviewNotFound, EmptyInterview):
-        await pack_message(chat_id, db)
-
-
-def register_bot(bot_object: Bot, dp: Dispatcher):
-    global bot
-    bot = bot_object
-
-    dp.register_message_handler(send_welcome, commands=["start"])
-    dp.register_message_handler(text_messages, content_types=ContentType.TEXT)
-    dp.register_message_handler(handle_voice, content_types=ContentType.VOICE)
-    dp.register_callback_query_handler(pack_choose, regexp='packs_[0-9]')
+        await pack_message(bot=bot, chat_id=chat_id)

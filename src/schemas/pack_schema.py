@@ -1,26 +1,10 @@
-from bson import ObjectId
-from pydantic import BaseModel, Field
+from typing import Optional
 
-from src.schemas.base import PyObjectId
-
-
-class Question(BaseModel):
-    file_id: str
-    sort_order: str
-
-    class Config:  # noqa: WPS431
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
+from schemas.base import BaseSchema
 
 
-class Pack(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+class Pack(BaseSchema):
+    id: int
     name: str
-    intro: str
-    outro: str
-    questions: list[Question] = []
-
-    class Config:  # noqa: WPS431
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    intro_file: Optional[str]
+    outro_file: Optional[str]

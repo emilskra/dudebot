@@ -1,18 +1,22 @@
 version: '3.8'
 services:
 
-  mongo:
-    image: mongo
-    ports:
-      - "27017:27017"
-    restart: always
+  ydb-local:
+    image: cr.yandex/yc/yandex-docker-local-ydb:latest
+    hostname: localhost
     volumes:
-      - mongodbdata:/data/db
+      - ydb_serts:/ydb_certs
     environment:
-      MONGO_INITDB_ROOT_USERNAME: $MONGO_USERNAME
-      MONGO_INITDB_ROOT_PASSWORD: $MONGO_PASSWORD
-    networks:
-      - bot-network
+      - YDB_LOCAL_SURVIVE_RESTART=True
+      - YDB_DEFAULT_LOG_LEVEL=NOTICE
+      - GRPC_TLS_PORT=2135
+      - GRPC_PORT=2136
+      - MON_PORT=8765
+      - YDB_USE_IN_MEMORY_PDISKS=true
+    ports:
+      - "2136:2136"
+      - "2135:2135"
+      - "8765:8765"
 
 
   bot:
@@ -28,5 +32,5 @@ networks:
     driver: bridge
 
 volumes:
-  postgresdata:
-    name: mongodbdata
+  ydb_serts:
+    name: ydb_serts

@@ -1,5 +1,5 @@
 import asyncio
-from src.services.audio import get_audio, BaseAudio
+from services.audio import get_audio, BaseAudio
 
 
 async def test_join():
@@ -17,6 +17,3 @@ async def test_join():
         ],
         "chat_id.ogg"
     )
-
-if __name__ == "__main__":
-    asyncio.run(test_join())

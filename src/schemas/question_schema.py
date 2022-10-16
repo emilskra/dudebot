@@ -1,9 +1,10 @@
-from pydantic import BaseModel
+from schemas.base import BaseSchema
 
 
-class Answer(BaseModel):
-    question_file_id: int
-    answer_file_id: int
+class Question(BaseSchema):
+    id: int
+    file_id: str
+    sort_order: str
 
     class Config:  # noqa: WPS431
         allow_population_by_field_name = True
