@@ -1,8 +1,20 @@
+from unittest.mock import AsyncMock
+
 import pytest
 import asyncio
 import ydb
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
+from db.session import create_engine, db_session_maker
+from models.base import Base
+from repositories.interview_repo import InterviewRepo
 from repositories.pack_repo import PackRepo
+from repositories.question_repo import QuestionRepo
+from services.audio import AudioLambda
+from services.interview import InterviewService, InterviewFinishService
 from services.pack import PackService
 from core.config import settings
 
@@ -15,44 +27,55 @@ def event_loop(request):
 
 
 @pytest.fixture(scope='session')
-async def db_session():
-    driver = ydb.aio.Driver(
-        endpoint=settings.database.database_host,
-        database=settings.database.database_name,
-        credentials=ydb.AnonymousCredentials(),
-    )
-    await driver.wait(fail_fast=True)
+async def test_db():
+    engine = create_async_engine(f"{settings.database.database_host}/bot_test", poolclass=NullPool)
 
-    session_pool = ydb.aio.SessionPool(driver, size=10)
-    yield session_pool
-    await session_pool.stop()
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+        yield engine
+    finally:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+
+        await engine.dispose()
 
 
-@pytest.fixture(scope='function')
-async def clean_db(db_session):
+@pytest.fixture(scope='function', autouse=True)
+async def clean_db(test_db):
     yield
 
-    tables = ['interview_answers', 'interviews', 'pack_questions', 'packs', 'users']
-
-    async def execute(session):
-        for table in tables:
-            query = f"""
-            DELETE FROM {table};
-            """
-            prepared_query = await session.prepare(query)
-            await session.transaction().execute(
-                prepared_query,
-                commit_tx=True,
-            )
-
-    await db_session.session_pool.retry_operation(execute)
+    async with test_db.begin() as con:
+        for table in reversed(Base.metadata.sorted_tables):
+            await con.execute(table.delete())
 
 
 @pytest.fixture(scope='session')
-async def pack_repo(db_session) -> PackRepo:
-    return PackRepo(db_session)
+async def pack_repo(test_db) -> PackRepo:
+    return PackRepo(test_db)
 
 
 @pytest.fixture(scope='session')
-async def pack_service(db_session, pack_repo: PackRepo):
+async def pack_service(pack_repo: PackRepo):
     return PackService(pack_repo)
+
+
+@pytest.fixture(scope='session')
+async def interview_repo(test_db) -> InterviewRepo:
+    return InterviewRepo(test_db)
+
+
+@pytest.fixture(scope='session')
+async def question_repo(test_db) -> QuestionRepo:
+    return QuestionRepo(test_db)
+
+
+@pytest.fixture(scope='session')
+def interview_service(interview_repo: InterviewRepo, question_repo: QuestionRepo) -> InterviewService:
+    return InterviewService(interview_repo, question_repo)
+
+
+@pytest.fixture(scope='session')
+def interview_finish_service(interview_service: InterviewService, pack_service: PackService) -> InterviewFinishService:
+    return InterviewFinishService(interview_service, pack_service, AsyncMock())

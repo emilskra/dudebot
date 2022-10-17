@@ -10,7 +10,7 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(send_welcome, commands=["start"])
     dp.register_message_handler(text_messages, content_types=ContentType.TEXT)
     dp.register_message_handler(handle_voice, content_types=ContentType.VOICE)
-    dp.register_callback_query_handler(pack_choose, regexp='packs_[0-9]')
+    dp.register_callback_query_handler(pack_choose, regexp="packs_[0-9]")
 
 
 def register_middlewares(bot, dp: Dispatcher):

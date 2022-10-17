@@ -3,13 +3,14 @@ from aiogram import Bot
 
 from core import texts
 from services.pack import PackService
-from services.question import QuestionService
 from services.base import get_service
 from services.interview import InterviewService, InterviewFinishService
 from services.exceptions import InterviewNotFound, EmptyInterview, QuestionNotFound
 from utils.bot_api_helper import (
-    get_keyboard_buttons, get_inline_buttons,
-    remove_keyboard, Button
+    get_keyboard_buttons,
+    get_inline_buttons,
+    remove_keyboard,
+    Button,
 )
 
 
@@ -50,17 +51,17 @@ async def pack_choose(call: CallbackQuery, bot: Bot):
 
 async def handle_voice(message: Message, bot: Bot) -> None:
     interview_service = get_service(InterviewService)
-    question_service = get_service(QuestionService)
 
     chat_id = message.chat.id
 
     try:
         await interview_service.save_answer(chat_id, message.voice.file_id)
-        question = await question_service.get_next_question(chat_id)
+        question = await interview_service.get_next_question(chat_id)
         await bot.send_voice(chat_id, question)
     except QuestionNotFound:
         await finish(bot=bot, chat_id=chat_id)
     except InterviewNotFound:
+        await bot.send_message(chat_id, texts.INTERVIEW_NOT_STARTED)
         await pack_message(bot=bot, chat_id=chat_id)
 
 

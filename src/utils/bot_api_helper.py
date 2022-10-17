@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
 from aiogram.types import (
-    ReplyKeyboardRemove, ReplyKeyboardMarkup,
-    InlineKeyboardMarkup, InlineKeyboardButton,
+    ReplyKeyboardRemove,
+    ReplyKeyboardMarkup,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
     KeyboardButton,
 )
 from typing import List, Optional
@@ -31,8 +33,8 @@ def get_inline_buttons(buttons: List[Button]) -> InlineKeyboardMarkup:
     inline_keyboard = InlineKeyboardMarkup(row_width=1)
     for button in buttons:
         inline_button = InlineKeyboardButton(
-            text=button.text,
-            callback_data=button.callback_data)
+            text=button.text, callback_data=button.callback_data
+        )
         inline_keyboard.add(inline_button)
 
     return inline_keyboard

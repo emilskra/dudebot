@@ -4,28 +4,31 @@ import logging
 import asyncio
 import os
 
-from sqlalchemy import delete
+from sqlalchemy import delete, insert
 
-from db.session import async_session
-from models.questions_models import Question, Pack
+from db.session import create_engine
+from models.question_model import QuestionModel
+from models.pack_model import PackModel
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 PACKS_DATA = os.getenv('PACKS_DATA', 'dev')
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data', PACKS_DATA)
 
+engine = create_engine()
 
-async def db_add(model, objs: list):
-    async with async_session() as session:
+
+async def db_add(model, objs: list[dict]):
+    async with engine.begin() as session:
         for obj in objs:
-            db_obj = model(**obj)
-            session.add(db_obj)
+            await session.execute(insert(model).values(**obj))
         await session.commit()
 
 
 async def clean_db():
-    async with async_session() as session:
-        for table in (Pack, Question):
+    async with engine.begin() as session:
+        for table in (PackModel, QuestionModel):
             await session.execute(delete(table))
         await session.commit()
 
@@ -36,18 +39,20 @@ async def init_db():
 
     with open(packs_file, 'r') as f:
         data: list = json.load(f)
-        await db_add(Pack, data)
+        await db_add(PackModel, data)
 
     with open(questions_file, 'r') as f:
         data: list = json.load(f)
-        await db_add(Question, data)
+        await db_add(QuestionModel, data)
 
 
 async def async_main() -> None:
     logger.info("Cleaning old data")
     await clean_db()
+
     logger.info("Creating initial data")
     await init_db()
+
     logger.info("Initial data created")
 
 

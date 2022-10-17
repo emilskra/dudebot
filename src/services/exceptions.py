@@ -10,6 +10,10 @@ class InterviewNotFound(Exception):
     ...
 
 
+class PackNotFound(Exception):
+    ...
+
+
 class EmptyInterview(Exception):
     ...
 

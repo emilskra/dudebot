@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 from aiogram.utils import executor
@@ -6,7 +5,7 @@ from aiogram.utils.executor import start_webhook
 from aiogram import Bot
 from aiogram.dispatcher import Dispatcher
 
-from db.session import init_session_pool, close_session_pool
+from db.session import init_engine, close_session_pool
 from setup import register_handlers, register_middlewares
 from core.config import settings
 from services.base import register_services
@@ -16,17 +15,17 @@ bot_dp = Dispatcher(bot)
 
 
 async def on_startup(dp: Dispatcher):
-    await init_session_pool()
+    await init_engine()
     await register_services()
 
 
 async def on_shutdown(dp: Dispatcher):
-    logging.warning('Shutting down..')
+    logging.warning("Shutting down..")
     await dp.storage.close()
     await dp.storage.wait_closed()
 
     await close_session_pool()
-    logging.warning('Bot stopped!')
+    logging.warning("Bot stopped!")
 
 
 def main():
@@ -47,10 +46,10 @@ def main():
             webhook_path=settings.bot.webhook_path,
             on_startup=on_startup,
             on_shutdown=on_shutdown,
-            host='0.0.0.0',
+            host="0.0.0.0",
             port=settings.port,
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

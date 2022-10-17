@@ -8,6 +8,12 @@ aiogram = "*"
 pydantic = "*"
 ydb = "*"
 python-dotenv = "*"
+sqlalchemy = "*"
+alembic = "*"
+psycopg2 = "*"
+psycopg2-binary = "*"
+asyncpg = "*"
+greenlet = "*"
 
 [dev-packages]
 pytest = "*"

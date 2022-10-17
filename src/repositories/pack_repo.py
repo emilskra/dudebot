@@ -1,51 +1,25 @@
-import ydb
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine
 
+from models.pack_model import PackModel
 from schemas.pack_schema import Pack
 
 
 class PackRepo:
-    def __init__(self, session_pool: ydb.aio.SessionPool):
-        self.session_pool = session_pool
-
-    async def add_packs(self, packs: list[Pack]):
-        async def execute(session):
-            query = """
-            DECLARE $packsData AS List<Struct<
-                id: String,
-                name: String,
-                intro_file: String,
-                outro_file: String>>;
-            INSERT INTO packs
-            SELECT
-                id,
-                name,
-                intro_file,
-                outro_file
-            FROM AS_TABLE($packsData);
-            """
-            prepared_query = await session.prepare(query)
-            await session.transaction().execute(
-                prepared_query,
-                parameters={
-                    "$packsData": packs,
-                },
-                commit_tx=True,
-            )
-
-        await self.session_pool.retry_operation(execute)
+    def __init__(self, engine: AsyncEngine):
+        self.engine = engine
 
     async def get_pack(self, pack_id: int) -> Pack:
-        ...
+        async with self.engine.begin() as session:
+            packs = await session.execute(
+                select(PackModel).where(PackModel.id == pack_id)
+            )
+            return packs.fetchone()
 
     async def get_all_packs(self) -> list[dict]:
-        async def execute(session):
-            query = """
-                SELECT name FROM packs;
-            """
-            prepared_query = await session.prepare(query)
-            return await session.execute(prepared_query)
-
-        return await self.session_pool.retry_operation(execute)
+        async with self.engine.begin() as session:
+            packs = await session.execute(select(PackModel.id, PackModel.name))
+            return packs.fetchall()
 
     async def get_user_pack(self, user_id: int):
         ...

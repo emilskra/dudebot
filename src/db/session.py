@@ -1,35 +1,40 @@
-import logging
 from typing import Optional
-import ydb
+
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 
 from core.config import settings
-SESSION_POOL: Optional[ydb.aio.SessionPool] = None
+
+ENGINE: Optional[AsyncEngine] = None
 
 
-async def get_session_pool() -> ydb.aio.SessionPool:
-    if SESSION_POOL is not None:
-        return SESSION_POOL
+def create_engine() -> AsyncEngine:
+    return create_async_engine(
+        url=settings.database.database_uri,
+        pool_size=settings.database.pg_pool_max_size,
+        pool_recycle=settings.database.pg_pool_recycle,
+        pool_pre_ping=settings.database.pg_pool_pre_ping,
+        pool_timeout=settings.database.pg_pool_timeout,
+        connect_args={
+            "timeout": settings.database.pg_connect_timeout,
+        },
+        echo=settings.database.pg_echo_enabled,
+    )
+
+
+async def get_engine() -> AsyncEngine:
+    if ENGINE is not None:
+        return ENGINE
 
     raise Exception("Session has not been initialized")
 
 
-async def init_session_pool():
-
-    driver = ydb.aio.Driver(
-        endpoint='grpc://localhost:2136',
-        database='/local'
-    )
-    logging.info("connecting to the database")
-    await driver.wait(fail_fast=True)
-
-    session_pool = ydb.aio.SessionPool(driver, size=10)
-
-    global SESSION_POOL
-    SESSION_POOL = session_pool
+async def init_engine():
+    global ENGINE
+    ENGINE = create_engine()
 
 
 async def close_session_pool():
-    if SESSION_POOL is not None:
-        await SESSION_POOL.stop()
+    if ENGINE is not None:
+        await ENGINE.dispose()
 
     raise Exception("Session has not been initialized")

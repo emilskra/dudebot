@@ -18,6 +18,17 @@ services:
       - "2135:2135"
       - "8765:8765"
 
+  postgres:
+    image: postgres:14.1-alpine
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_PASSWORD: dudebot
+      POSTGRES_USER: bot
+      POSTGRES_DB: dudebot
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
 
   bot:
     build: .
@@ -34,3 +45,5 @@ networks:
 volumes:
   ydb_serts:
     name: ydb_serts
+  postgres-data:
+    driver: "local"

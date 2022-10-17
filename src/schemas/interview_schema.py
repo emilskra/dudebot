@@ -1,4 +1,5 @@
 import enum
+import uuid
 
 from schemas.base import BaseSchema
 
@@ -9,10 +10,15 @@ class InterviewState(str, enum.Enum):
 
 
 class Interview(BaseSchema):
-    id: str
+    id: uuid.UUID
     status: InterviewState
     user_id: int
     pack_id: int
+
+    class Config:  # noqa: WPS431
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        orm_mode = True
 
 
 class InterviewCreate(BaseSchema):
@@ -26,9 +32,13 @@ class InterviewUpdate(BaseSchema):
 
 
 class InterviewAnswer(BaseSchema):
-    id: str
-    answer: str
-    interview_id: int
-    question: int
-    question_order: int
     user_id: int
+    interview_id: uuid.UUID
+    answer: str
+    question: str
+    question_order: int
+
+    class Config:  # noqa: WPS431
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        orm_mode = True

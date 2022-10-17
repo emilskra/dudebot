@@ -15,7 +15,6 @@ class ConcatFiles(BaseModel):
 
 
 class BaseAudio(abc.ABC):
-
     @staticmethod
     @abc.abstractmethod
     async def join_files(file_ids: list[str], joined_file_name: str) -> io.BytesIO:
@@ -23,7 +22,6 @@ class BaseAudio(abc.ABC):
 
 
 class AudioLambda(BaseAudio):
-
     @staticmethod
     async def join_files(file_ids: list[str], joined_file_name: str) -> io.BytesIO:
 
@@ -33,15 +31,9 @@ class AudioLambda(BaseAudio):
                 finishFilename=joined_file_name,
             )
             async with session.post(
-                    settings.lambda_concat_url,
-                    json=data.dict(),
-                    ssl=False
+                settings.lambda_concat_url, json=data.dict(), ssl=False
             ) as response:
                 if response.status != HTTPStatus.OK:
                     raise AudioJoinError(await response.json())
 
                 return io.BytesIO(await response.read())
-
-
-def get_audio() -> BaseAudio:
-    return AudioLambda()
