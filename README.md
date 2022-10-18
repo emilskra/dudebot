@@ -1,2 +1,2 @@
 # dudebot
-Telegran chatbot wich takes interview by voice messages
+Telegram chatbot wich takes interview by voice messages
