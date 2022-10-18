@@ -15,8 +15,8 @@ bot_dp = Dispatcher(bot)
 
 
 async def on_startup(dp: Dispatcher):
-    await init_engine()
-    await register_services()
+    engine = await init_engine()
+    register_services(engine)
 
 
 async def on_shutdown(dp: Dispatcher):

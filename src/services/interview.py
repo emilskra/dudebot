@@ -44,7 +44,7 @@ class InterviewService:
                 user_interview.id
             )
         )
-        sort_order = last_question_order + 1 if last_question_order else 0
+        sort_order = last_question_order + 1 if last_question_order is not None else 0
         question = await self.question_repo.get_pack_question(
             pack_id=user_interview.pack_id,
             sort_order=sort_order,
@@ -54,7 +54,7 @@ class InterviewService:
 
         return Question.from_orm(question)
 
-    async def save_answer(self, user_id: int, answer_file: str) -> str:
+    async def save_answer(self, user_id: int, answer_file: str):
         user_interview = await self.get_user_active_interview(user_id)
 
         next_question = await self.get_next_question(user_id)
@@ -67,8 +67,6 @@ class InterviewService:
             question_order=next_question.sort_order,
         )
         await self.interview_repo.add_interview_answer(interview_answer)
-
-        return next_question.file_id
 
     async def set_interview_finish(self, user_id: int) -> None:
         update_data = InterviewUpdate(
@@ -100,8 +98,6 @@ class InterviewFinishService:
 
     async def get_interview_finish_file(self, user_id: int) -> io.BytesIO:
         file_ids: list[str] = await self.get_user_interview_files(user_id)
-        if not file_ids:
-            raise EmptyInterview
 
         finish_file_name = f"{user_id}.ogg"
         finish_file = await self.audio_service.join_files(file_ids, finish_file_name)
@@ -117,6 +113,8 @@ class InterviewFinishService:
         pack = await self.pack_service.get_pack(user_active_interview.pack_id)
 
         answers = await self.interview_service.get_user_interview_answers(user_id)
+        if not answers:
+            raise EmptyInterview
 
         if pack.intro_file:
             files_ids.append(pack.intro_file)

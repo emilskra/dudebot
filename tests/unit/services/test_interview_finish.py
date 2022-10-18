@@ -2,23 +2,34 @@ import uuid
 
 import pytest
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.interview_model import InterviewModel, InterviewAnswerModel
 from models.pack_model import PackModel
-from services.exceptions import PackNotFound
+from services.exceptions import PackNotFound, EmptyInterview
 from services.interview import InterviewFinishService
 from tests.unit.utils import db_inserts
 
 
 @pytest.mark.asyncio
-async def test_get_user_interview_files(test_db: AsyncSession, interview_finish_service: InterviewFinishService):
+async def test_get_user_interview_files(
+        test_db: AsyncSession, interview_finish_service: InterviewFinishService
+):
     pack_id = 1
     interview_id = uuid.uuid4()
     insert_data = {
-        PackModel: {"id": pack_id, "name": "test_pack", "intro_file": "intro_file", "outro_file": "outro_file"},
-        InterviewModel: {"id": str(interview_id), "user_id": 1, "pack_id": pack_id, "status": "started"},
+        PackModel: {
+            "id": pack_id,
+            "name": "test_pack",
+            "intro_file": "intro_file",
+            "outro_file": "outro_file",
+        },
+        InterviewModel: {
+            "id": str(interview_id),
+            "user_id": 1,
+            "pack_id": pack_id,
+            "status": "started",
+        },
         InterviewAnswerModel: [
             {
                 "id": str(uuid.uuid4()),
@@ -36,22 +47,62 @@ async def test_get_user_interview_files(test_db: AsyncSession, interview_finish_
                 "question_order": 1,
                 "answer": "test_answer_1",
             },
-        ]
+        ],
     }
     await db_inserts(test_db, insert_data)
 
     files = await interview_finish_service.get_user_interview_files(user_id=1)
 
-    assert files == ["intro_file", "test", "test_answer", "test_1", "test_answer_1", "outro_file"]
+    assert files == [
+        "intro_file",
+        "test",
+        "test_answer",
+        "test_1",
+        "test_answer_1",
+        "outro_file",
+    ]
 
 
 @pytest.mark.asyncio
-async def test_get_user_interview_files_no_intro_and_outro(test_db: AsyncSession, interview_finish_service: InterviewFinishService):
+async def test_get_user_interview_files_empty_interview(
+        test_db: AsyncSession, interview_finish_service: InterviewFinishService
+):
+    pack_id = 1
+    interview_id = uuid.uuid4()
+    insert_data = {
+        PackModel: {
+            "id": pack_id,
+            "name": "test_pack",
+            "intro_file": "intro_file",
+            "outro_file": "outro_file",
+        },
+        InterviewModel: {
+            "id": str(interview_id),
+            "user_id": 1,
+            "pack_id": pack_id,
+            "status": "started",
+        },
+    }
+    await db_inserts(test_db, insert_data)
+
+    with pytest.raises(EmptyInterview):
+        await interview_finish_service.get_user_interview_files(user_id=1)
+
+
+@pytest.mark.asyncio
+async def test_get_user_interview_files_no_intro_and_outro(
+        test_db: AsyncSession, interview_finish_service: InterviewFinishService
+):
     pack_id = 1
     interview_id = uuid.uuid4()
     insert_data = {
         PackModel: {"id": pack_id, "name": "test_pack"},
-        InterviewModel: {"id": str(interview_id), "user_id": 1, "pack_id": pack_id, "status": "started"},
+        InterviewModel: {
+            "id": str(interview_id),
+            "user_id": 1,
+            "pack_id": pack_id,
+            "status": "started",
+        },
         InterviewAnswerModel: [
             {
                 "id": str(uuid.uuid4()),
@@ -69,7 +120,7 @@ async def test_get_user_interview_files_no_intro_and_outro(test_db: AsyncSession
                 "question_order": 1,
                 "answer": "test_answer_1",
             },
-        ]
+        ],
     }
     await db_inserts(test_db, insert_data)
 
@@ -79,11 +130,18 @@ async def test_get_user_interview_files_no_intro_and_outro(test_db: AsyncSession
 
 
 @pytest.mark.asyncio
-async def test_get_interview_finish_file_pack_not_found(test_db: AsyncSession, interview_finish_service: InterviewFinishService):
+async def test_get_interview_finish_file_pack_not_found(
+        test_db: AsyncSession, interview_finish_service: InterviewFinishService
+):
     pack_id = 1
     interview_id = uuid.uuid4()
     insert_data = {
-        InterviewModel: {"id": str(interview_id), "user_id": 1, "pack_id": pack_id, "status": "started"},
+        InterviewModel: {
+            "id": str(interview_id),
+            "user_id": 1,
+            "pack_id": pack_id,
+            "status": "started",
+        },
         InterviewAnswerModel: [
             {
                 "id": str(uuid.uuid4()),
@@ -101,7 +159,7 @@ async def test_get_interview_finish_file_pack_not_found(test_db: AsyncSession, i
                 "question_order": 1,
                 "answer": "test_1",
             },
-        ]
+        ],
     }
     await db_inserts(test_db, insert_data)
 
@@ -111,12 +169,19 @@ async def test_get_interview_finish_file_pack_not_found(test_db: AsyncSession, i
 
 
 @pytest.mark.asyncio
-async def test_get_interview_finish_file(test_db: AsyncSession, interview_finish_service: InterviewFinishService):
+async def test_get_interview_finish_file(
+        test_db: AsyncSession, interview_finish_service: InterviewFinishService
+):
     pack_id = 1
     interview_id = uuid.uuid4()
     insert_data = {
         PackModel: {"id": pack_id, "name": "test_pack"},
-        InterviewModel: {"id": str(interview_id), "user_id": 1, "pack_id": pack_id, "status": "started"},
+        InterviewModel: {
+            "id": str(interview_id),
+            "user_id": 1,
+            "pack_id": pack_id,
+            "status": "started",
+        },
         InterviewAnswerModel: [
             {
                 "id": str(uuid.uuid4()),
@@ -134,7 +199,7 @@ async def test_get_interview_finish_file(test_db: AsyncSession, interview_finish
                 "question_order": 1,
                 "answer": "test_answer_1",
             },
-        ]
+        ],
     }
     await db_inserts(test_db, insert_data)
 

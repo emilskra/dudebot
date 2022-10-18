@@ -42,11 +42,8 @@ async def pack_choose(call: CallbackQuery, bot: Bot):
     await bot.send_message(chat_id, texts.START, reply_markup=keyboard)
 
     await interview_service.start_interview(pack_id, chat_id)
-    try:
-        question = await interview_service.get_next_question(chat_id)
-        await bot.send_voice(chat_id, question, reply_markup=keyboard)
-    except QuestionNotFound:
-        await finish(bot=bot, chat_id=chat_id)
+    question = await interview_service.get_next_question(chat_id)
+    await bot.send_voice(chat_id, question.file_id)
 
 
 async def handle_voice(message: Message, bot: Bot) -> None:
@@ -57,7 +54,7 @@ async def handle_voice(message: Message, bot: Bot) -> None:
     try:
         await interview_service.save_answer(chat_id, message.voice.file_id)
         question = await interview_service.get_next_question(chat_id)
-        await bot.send_voice(chat_id, question)
+        await bot.send_voice(chat_id, question.file_id)
     except QuestionNotFound:
         await finish(bot=bot, chat_id=chat_id)
     except InterviewNotFound:
@@ -84,13 +81,18 @@ async def finish(chat_id: int, bot: Bot) -> None:
     keyboard = get_keyboard_buttons([Button(text=texts.REPEAT)])
     remove = remove_keyboard()
 
-    await bot.send_message(chat_id, texts.WAIT, reply_markup=remove)
     try:
+        await interview_finish_service.get_user_interview_files(chat_id)
+
         finish_file = await interview_finish_service.get_interview_finish_file(chat_id)
+        await bot.send_message(chat_id, texts.WAIT, reply_markup=remove)
 
         await bot.send_message(chat_id, texts.INTERVIEW_END, reply_markup=keyboard)
         await bot.send_audio(chat_id, finish_file)
 
         await interview_service.set_interview_finish(chat_id)
-    except (InterviewNotFound, EmptyInterview):
+    except InterviewNotFound:
         await pack_message(bot=bot, chat_id=chat_id)
+    except EmptyInterview:
+        await pack_message(bot=bot, chat_id=chat_id)
+        await interview_service.set_interview_finish(chat_id)

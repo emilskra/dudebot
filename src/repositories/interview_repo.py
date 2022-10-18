@@ -58,7 +58,7 @@ class InterviewRepo:
             query = insert(InterviewAnswerModel).values(**interview_data.dict())
             await session.execute(query)
 
-    async def get_interview_answers(self, interview_id: str) -> list[dict]:
+    async def get_interview_answers(self, interview_id: uuid.UUID) -> list[dict]:
         async with self.engine.begin() as session:
             query = select(InterviewAnswerModel).where(
                 InterviewAnswerModel.interview_id == interview_id

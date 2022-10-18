@@ -21,16 +21,13 @@ def create_engine() -> AsyncEngine:
     )
 
 
-async def get_engine() -> AsyncEngine:
+async def init_engine() -> AsyncEngine:
+    global ENGINE
     if ENGINE is not None:
         return ENGINE
 
-    raise Exception("Session has not been initialized")
-
-
-async def init_engine():
-    global ENGINE
     ENGINE = create_engine()
+    return ENGINE
 
 
 async def close_session_pool():

@@ -5,7 +5,7 @@ from pydantic import BaseSettings, Field, validator
 
 
 class BotSettings(BaseSettings):
-    token: Optional[str] = "1502829486:AAHr60kaoCuoh5880Y9chqsx4Vr6ZrZWiQs"
+    token: Optional[str]
     webhook_host: str = Field("localhost", env="URL")
     webhook_path: Optional[str] = None
     webhook_url: Optional[str] = None

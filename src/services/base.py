@@ -1,6 +1,7 @@
 from typing import TypeVar, Optional
 
-from db.session import get_engine
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 from repositories.interview_repo import InterviewRepo
 from repositories.pack_repo import PackRepo
 from repositories.question_repo import QuestionRepo
@@ -13,9 +14,8 @@ T = TypeVar("T")
 __services: dict[type, object] = {}
 
 
-async def register_services():
+def register_services(engine: AsyncEngine):
     global __services
-    engine = await get_engine()
 
     interview_repo = InterviewRepo(engine)
     pack_repo = PackRepo(engine)
@@ -41,4 +41,7 @@ async def register_services():
 
 def get_service(cls: T):
     service: Optional[T] = __services.get(cls)
+    if not service:
+        raise Exception(f"Service {cls} not initialized")
+
     return service
