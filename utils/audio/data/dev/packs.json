@@ -1,0 +1,14 @@
+[
+  {
+      "id": 1,
+      "name": "Кремниевая долина",
+      "intro_file": "AwACAgIAAxkDAAIIJGGqi2wusiROsxHX4Dihw1STcYWKAALzFAACgHpRSSZWdzGLsZn2IgQ",
+      "outro_file": "AwACAgIAAxkDAAIIJWGqi2xseCQ0jcRBGQRNlEM61UhQAAL0FAACgHpRSdV9ZZoOnnTGIgQ"
+  },
+  {
+      "id": 2,
+      "name": "GQ",
+      "intro_file": "AwACAgIAAxkDAAIIK2Gqi-X06xS0TSrQ56l8Nqo9WEhKAAL6FAACgHpRSY9HRmuaTOFGIgQ",
+      "outro_file": ""
+  }
+]

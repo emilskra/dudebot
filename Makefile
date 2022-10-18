@@ -2,8 +2,11 @@ build:
 	docker compose up --build -d
 
 migrate:
-	cd db/
 	alembic upgrade head
+
+make_migrations:
+	cd migrations
+	alembic revision --autogenerate -m "$(message)"
 
 init_db:
 	cd audio/
@@ -15,3 +18,6 @@ stop:
 clean:
 	make stop
 	docker compose --force
+
+.EXPORT_ALL_VARIABLES:
+export PYTHONPATH := $(shell pwd)/src:$(PYTHONPATH)
