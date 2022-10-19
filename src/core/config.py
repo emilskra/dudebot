@@ -6,17 +6,8 @@ from pydantic import BaseSettings, Field, validator
 
 class BotSettings(BaseSettings):
     token: Optional[str]
-    webhook_host: str = Field("localhost", env="URL")
     webhook_path: Optional[str] = None
     webhook_url: Optional[str] = None
-
-    @validator("webhook_path", pre=True, always=True)
-    def set_webhook_path(cls, v: Optional[str], values) -> str:  # noqa
-        return f'/webhook/{values.get("token")}'
-
-    @validator("webhook_url", pre=True, always=True)
-    def set_webhook_url(cls, v: Optional[str], values) -> str:  # noqa
-        return f'{values.get("webhook_host")}{values.get("webhook_path")}'
 
 
 class YDBSettings(BaseSettings):
@@ -45,7 +36,7 @@ class PostgresSQLSettings(BaseSettings):
 class ProjectSettings(BaseSettings):
     project_name: str = "Dude Bot"
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
-    debug: bool = Field(True, env="BOT_DEBUG")
+    debug: bool = Field(False, env="BOT_DEBUG")
     port: int = Field(9000)
     lambda_concat_url: str = Field(
         "https://functions.yandexcloud.net/d4e7lv30afsp1onahojv"

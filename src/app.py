@@ -17,6 +17,7 @@ bot_dp = Dispatcher(bot)
 async def on_startup(dp: Dispatcher):
     engine = await init_engine()
     register_services(engine)
+    await bot.set_webhook(settings.bot.webhook_url)
 
 
 async def on_shutdown(dp: Dispatcher):
@@ -25,6 +26,8 @@ async def on_shutdown(dp: Dispatcher):
     await dp.storage.wait_closed()
 
     await close_session_pool()
+
+    await bot.delete_webhook()
     logging.warning("Bot stopped!")
 
 
