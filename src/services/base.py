@@ -1,11 +1,12 @@
 from typing import TypeVar, Optional
 
+from aiogram import Bot
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from repositories.interview_repo import InterviewRepo
 from repositories.pack_repo import PackRepo
 from repositories.question_repo import QuestionRepo
-from services.audio import AudioLambda
+from services.audio import AudioLambda, AudioFfmpeg
 from services.interview import InterviewService, InterviewFinishService
 from services.pack import PackService
 
@@ -14,14 +15,14 @@ T = TypeVar("T")
 __services: dict[type, object] = {}
 
 
-def register_services(engine: AsyncEngine):
+def register_services(bot: Bot, engine: AsyncEngine):
     global __services
 
     interview_repo = InterviewRepo(engine)
     pack_repo = PackRepo(engine)
     question_repo = QuestionRepo(engine)
 
-    audio = AudioLambda()
+    audio = AudioFfmpeg(bot)
 
     pack_service = PackService(pack_repo=pack_repo)
     __services[PackService] = pack_service

@@ -16,7 +16,7 @@ bot_dp = Dispatcher(bot)
 
 async def on_startup(dp: Dispatcher):
     engine = await init_engine()
-    register_services(engine)
+    register_services(bot, engine)
     await bot.set_webhook(settings.bot.webhook_url)
 
 

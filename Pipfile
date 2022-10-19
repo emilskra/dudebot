@@ -6,19 +6,17 @@ name = "pypi"
 [packages]
 aiogram = "*"
 pydantic = "*"
-ydb = "*"
 python-dotenv = "*"
 sqlalchemy = "*"
-alembic = "*"
-psycopg2 = "*"
-psycopg2-binary = "*"
 asyncpg = "*"
 greenlet = "*"
+pydub = "*"
 
 [dev-packages]
 pytest = "*"
 pytest-asyncio = "*"
 pytest-mock = "*"
+alembic = "*"
 
 [requires]
 python_version = "3.10"

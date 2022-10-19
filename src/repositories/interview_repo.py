@@ -1,17 +1,14 @@
 import uuid
 from typing import Optional
 
-import ydb
-from sqlalchemy import insert, update, select, func
+from sqlalchemy import insert, update, select
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from models.interview_model import InterviewModel, InterviewAnswerModel
 from schemas.interview_schema import (
-    Interview,
     InterviewUpdate,
     InterviewState,
     InterviewCreate,
-    InterviewAnswer,
     InterviewAnswer,
 )
 
