@@ -13,7 +13,7 @@ from models.pack_model import PackModel
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-PACKS_DATA = os.getenv('PACKS_DATA', 'dev')
+PACKS_DATA = os.getenv('PACKS_DATA', 'prod')
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data', PACKS_DATA)
 
 engine = create_engine()

@@ -8,6 +8,10 @@ make_migrations:
 	cd migrations
 	alembic revision --autogenerate -m "$(message)"
 
+stamp_head:
+	cd migrations
+	alembic stamp head
+
 init_db:
 	cd audio/
 	python fill_data.py
