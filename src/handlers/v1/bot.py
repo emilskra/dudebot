@@ -64,6 +64,8 @@ async def handle_voice(message: Message, bot: Bot) -> None:
 
 async def pack_message(chat_id: int, bot: Bot) -> None:
     pack_service = get_service(PackService)
+    interview_service = get_service(InterviewService)
+    await interview_service.set_interview_finish(chat_id)
 
     buttons = [
         Button(text=pack.name, callback_data=f"packs_{pack.id}")
@@ -82,7 +84,7 @@ async def finish(chat_id: int, bot: Bot) -> None:
     remove = remove_keyboard()
 
     try:
-        await interview_finish_service.get_user_interview_files(chat_id)
+        await interview_finish_service.check_user_has_answers(chat_id)
 
         finish_file = await interview_finish_service.get_interview_finish_file(chat_id)
         await bot.send_message(chat_id, texts.WAIT, reply_markup=remove)
@@ -96,3 +98,8 @@ async def finish(chat_id: int, bot: Bot) -> None:
     except EmptyInterview:
         await pack_message(bot=bot, chat_id=chat_id)
         await interview_service.set_interview_finish(chat_id)
+    except Exception as e:
+        await bot.send_message(chat_id, texts.SMT_WENT_WRONG, reply_markup=remove)
+        await interview_service.set_interview_finish(chat_id)
+
+        raise e

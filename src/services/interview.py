@@ -127,3 +127,8 @@ class InterviewFinishService:
             files_ids.append(pack.outro_file)
 
         return files_ids
+
+    async def check_user_has_answers(self, user_id: int):
+        answers = await self.interview_service.get_user_interview_answers(user_id)
+        if not answers:
+            raise EmptyInterview
