@@ -33,5 +33,6 @@ async def init_engine() -> AsyncEngine:
 async def close_session_pool():
     if ENGINE is not None:
         await ENGINE.dispose()
+        return
 
     raise Exception("Session has not been initialized")
