@@ -86,9 +86,9 @@ async def finish(chat_id: int, bot: Bot) -> None:
     try:
         await interview_finish_service.check_user_has_answers(chat_id)
 
-        finish_file = await interview_finish_service.get_interview_finish_file(chat_id)
         await bot.send_message(chat_id, texts.WAIT, reply_markup=remove)
 
+        finish_file = await interview_finish_service.get_interview_finish_file(chat_id)
         await bot.send_message(chat_id, texts.INTERVIEW_END, reply_markup=keyboard)
         await bot.send_audio(chat_id, finish_file)
 
