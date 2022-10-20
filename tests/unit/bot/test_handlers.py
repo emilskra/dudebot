@@ -37,7 +37,7 @@ async def assert_finish_interview(
 ):
     if mocker:
         join_files = mocker.patch(
-            "services.audio.AudioLambda.join_files", return_value="finish_file"
+            "services.audio.AudioFfmpeg.join_files", return_value="finish_file"
         )
         yield
         join_files.assert_called_with(interview_answers, "1.ogg")

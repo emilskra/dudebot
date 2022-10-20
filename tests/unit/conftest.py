@@ -85,5 +85,6 @@ def interview_finish_service(
 
 @pytest.fixture(scope="session")
 def bot(test_db) -> AsyncMock:
-    register_services(test_db)
-    return AsyncMock()
+    bot = AsyncMock()
+    register_services(bot, test_db)
+    return bot
